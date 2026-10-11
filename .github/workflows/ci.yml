@@ -262,18 +262,6 @@ jobs:
             exit 1
           fi
 
-          # 自动打的版本 Release（V1.0.5 这种）也挂上同一份 APK，作为该版本的永久归档，
-          # 与历史上手工建的 V1.0.3 / V1.0.4 形态一致。
-          # asset 名含版本号（c001apk_next-V1.0.5-release.10005.apk），与 release-latest 不冲突。
-          # VERSION 就是上面刚解析出来的那个（main 上是 +1 后的号）。
-          if [ "${GITHUB_REF_NAME}" = "main" ] && gh release view "$VERSION" >/dev/null 2>&1; then
-            if gh release upload "$VERSION" "${FILES[@]}" --clobber; then
-              echo "::notice::已把产物归档到 Release ${VERSION}"
-            else
-              echo "::warning::产物归档到 Release ${VERSION} 失败（tag 已建好，不影响发布）"
-            fi
-          fi
-
           # 把本次发行版的位置写进 run summary 和 annotation，方便直接拿链接。
           # asset 名由 GitHub 规范化（文件名里的 ( ) 会变成 .），所以链接以服务端返回的名字为准
           export BASE="https://github.com/${GITHUB_REPOSITORY}/releases/download/${TAG}"
@@ -333,14 +321,32 @@ jobs:
           fi
           # 同时建一个同名 Release 作为该版本的固定归档入口。
           # 注意：Release 页面会挂 commit 的自动源码包，所以一定要带说明文字，
-          # 否则那个页面是空的。正式 APK 仍由下面的 release-latest 承载。
+          # 否则那个页面是空的。
           if gh release view "$TAG" >/dev/null 2>&1; then
-            echo "::notice::Release ${TAG} 已存在，跳过"
+            echo "::notice::Release ${TAG} 已存在，跳过创建"
           else
             gh release create "$TAG" --title "${TAG}" --target "$GITHUB_SHA" \
               --notes "版本归档：${TAG}（versionCode ${{ steps.ver.outputs.code }}）。
-          正式版 APK 在 [release-latest](https://github.com/${GITHUB_REPOSITORY}/releases/tag/release-latest)；此处只作为该版本的固定 tag / commit 归档。" \
+          正式版 APK 在 [release-latest](https://github.com/${GITHUB_REPOSITORY}/releases/tag/release-latest)；此处作为该版本的固定 tag / 归档入口。" \
               2>/dev/null || echo "::warning::Release ${TAG} 创建失败（可能被分支保护或权限限制），tag 已建好，不影响发布"
+          fi
+
+          # 把本次正式包也归档到这个版本 Release 上，与历史上手工建的 V1.0.3 / V1.0.4 形态一致。
+          # ⚠️ 必须放在这里而不是 Publish 步骤里：Release 是本步骤刚创建的，
+          #    放在 Publish 会让 gh release view 查不到、静默跳过（V1.0.5 首轮就这么空了一次）。
+          # asset 名含版本号，与 release-latest 上的同名文件不冲突。
+          FILES=()
+          for f in app/build/outputs/apk/release/*.apk; do
+            if [ -f "$f" ]; then FILES+=("$f"); fi
+          done
+          if [ ${#FILES[@]} -gt 0 ] && gh release view "$TAG" >/dev/null 2>&1; then
+            if gh release upload "$TAG" "${FILES[@]}" --clobber; then
+              echo "::notice::已把 ${FILES[*]} 归档到 Release ${TAG}"
+            else
+              echo "::warning::产物归档到 Release ${TAG} 失败（tag 已建好，不影响发布）"
+            fi
+          else
+            echo "::warning::没找到 release APK 或 Release 不存在，跳过归档"
           fi
 
       # 失败时把 Gradle 日志尾部转成 annotation，
