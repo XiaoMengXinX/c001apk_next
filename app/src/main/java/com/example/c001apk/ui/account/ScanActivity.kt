@@ -21,6 +21,20 @@ import com.google.zxing.MultiFormatReader
 import com.google.zxing.PlanarYUVLuminanceSource
 import com.google.zxing.common.HybridBinarizer
 import java.util.concurrent.Executors
+import android.util.Base64
+import com.example.c001apk.util.PrefManager
+import org.json.JSONObject
+import java.io.OutputStreamWriter
+import java.net.HttpURLConnection
+import java.net.URL
+import java.net.URLEncoder
+import java.security.SecureRandom
+import javax.crypto.Cipher
+import javax.crypto.spec.IvParameterSpec
+import javax.crypto.spec.SecretKeySpec
+import java.security.KeyFactory
+import java.security.spec.RSAPublicKeySpec
+import java.math.BigInteger
 
 /**
  * 扫码页（阶段 ④）。
@@ -34,7 +48,7 @@ import java.util.concurrent.Executors
  *    「您正在尝试登录「设备名」，IP 地址位于 x.x.x.x。确认登录吗？」
  * 4. 用户确认 → 换 refreshToken / AES / 公钥加密 → 上报
  *
- * ## ⚠️ 第 4 步现在是**占位**（`submitLogin`）
+ * ## 第 4 步（`doConfirm`）已接真实接口 ✓
  * 服务端 `scan` / `confirm` 两个接口还没部署 ⇒ 明确提示，不假装能用 ✗
  *
  * ## 线程
@@ -150,53 +164,155 @@ class ScanActivity : BaseActivity<ActivityScanBinding>() {
      * 二维码里是客户端与服务端约定的 URL（`requestId` + `appTicket` + 公钥）。
      * 不是本项目格式的，直接提示「这不是有效的 c001apk 登录二维码」✓
      */
+    /**
+     * 解出二维码后：先 POST `scan` 拿「桌面端设备名 + IP」，再弹确认框。
+     *
+     * ★ 顺序很重要：协议第 ⑥ 步要求确认框显示的是**真实**设备名和 IP，
+     *   不是占位 ✗ —— 所以必须先调 scan（服务端把 `REMOTE_ADDR` 记进会话 ✓）
+     */
     private fun onScanned(text: String) {
         val uri = runCatching { android.net.Uri.parse(text) }.getOrNull()
         val requestId = uri?.getQueryParameter("r")
         val appTicket = uri?.getQueryParameter("t")
-        if (requestId.isNullOrEmpty() || appTicket.isNullOrEmpty()) {
+        val pubKeyB64 = uri?.getQueryParameter("k")
+        if (requestId.isNullOrEmpty() || appTicket.isNullOrEmpty() || pubKeyB64.isNullOrEmpty()) {
             Toast.makeText(this, R.string.scanInvalid, Toast.LENGTH_LONG).show()
             handled = false
             return
         }
 
-        // ★ 设备信息 + IP 现在拿不到真实值
-        //   —— `scan` 接口会回「设备名 + IP」，服务端部署后填进来 ✓
-        //   现在先显示占位，并明确标注「服务端未部署」，不假装能用 ✗
-        val device = getString(R.string.scanConfirmTitle)
-        val ip = "服务端未部署"
+        // 后台线程做网络；UI 线程弹框
+        executor.execute {
+            val scanned = runCatching {
+                httpPost("scan", mapOf(
+                    "appTicket" to appTicket,
+                    "device" to myDeviceName(),
+                ))
+            }
+            val device = scanned.getOrNull()?.optString("device").orEmpty()
+            val ip = scanned.getOrNull()?.optString("ip").orEmpty()
+            runOnUiThread {
+                if (!scanned.isSuccess || device.isEmpty()) {
+                    Toast.makeText(this, R.string.scanInvalid, Toast.LENGTH_LONG).show()
+                    handled = false
+                    return@runOnUiThread
+                }
+                MaterialAlertDialogBuilder(this)
+                    .setTitle(R.string.scanConfirmTitle)
+                    .setMessage(getString(R.string.scanConfirmMessage, device, ip))
+                    .setNegativeButton(android.R.string.cancel) { _, _ ->
+                        handled = false
+                    }
+                    .setPositiveButton(android.R.string.ok) { _, _ ->
+                        doConfirm(appTicket, pubKeyB64)
+                    }
+                    .setCancelable(false)
+                    .show()
+            }
+        }
+    }
 
-        MaterialAlertDialogBuilder(this)
-            .setTitle(R.string.scanConfirmTitle)
-            .setMessage(getString(R.string.scanConfirmMessage, device, ip))
-            .setNegativeButton(android.R.string.cancel) { _, _ ->
-                handled = false
-            }
-            .setPositiveButton(android.R.string.ok) { _, _ ->
-                submitLogin(requestId, appTicket)
-            }
-            .setCancelable(false)
-            .show()
+    /** 本机机型（上报用，明文 ✓ 协议允许） */
+    private fun myDeviceName(): String {
+        val m = android.os.Build.MANUFACTURER ?: ""
+        val d = android.os.Build.MODEL ?: ""
+        return if (m.isEmpty()) d else "$m $d"
     }
 
     /**
-     * 上报登录（第 ⑤ 步）。
+     * 用户确认后：加密并上报 `confirm`。
      *
-     * ⚠️ **占位实现**：服务端 `scan` / `confirm` 还没部署 ⇒ 只提示，不假装成功 ✗
-     * 部署后要做：
-     *   1. 用当前凭据换 refreshToken（`GStorage`/`PrefManager` 里已有 ✓）
-     *   2. 随机 32 字节 AES 密钥；用二维码里的**桌面端公钥**做 RSA(PKCS#1 v1.5) 加密
-     *   3. 用 AES-CBC(PKCS7) 加密 refreshToken（IV 拼在密文前 16 字节）
-     *   4. POST `confirm`：appTicket + encKey + encToken + duid(明文) + device(明文)
+     * ## 加密（与桌面端 `qr_crypto.dart` 的约定严格一致）
+     * - 随机 32 字节 **AES 密钥**
+     * - 用二维码里的**桌面端公钥**做 RSA **PKCS#1 v1.5** 加密该 AES 密钥 → `encKey`
+     * - 用 AES **CBC + PKCS5/7** 加密 `refreshToken`，**IV 拼在密文前 16 字节** → `encToken`
+     * - `duid` 与 `device` 明文 ✓（协议允许）
+     *
+     * ## 硬约束
+     * 只加密 `refreshToken`，服务端拿到的永远是密文 ✓
      */
-    private fun submitLogin(requestId: String, appTicket: String) {
-        MaterialAlertDialogBuilder(this)
-            .setTitle(R.string.scanLogin)
-            .setMessage("服务端尚未部署，无法完成登录。\n（requestId=$requestId）")
-            .setPositiveButton(android.R.string.ok) { _, _ ->
-                handled = false
+    private fun doConfirm(appTicket: String, pubKeyB64: String) {
+        val token = PrefManager.refreshToken.ifEmpty { PrefManager.token }
+        if (token.isEmpty()) {
+            Toast.makeText(this, "本机未登录，无法授权", Toast.LENGTH_LONG).show()
+            handled = false
+            return
+        }
+        Toast.makeText(this, "正在授权…", Toast.LENGTH_SHORT).show()
+
+        executor.execute {
+            val ok = runCatching {
+                // ① 随机 AES 密钥（32 字节 = AES-256）
+                val aesKey = ByteArray(32).also { SecureRandom().nextBytes(it) }
+                val iv = ByteArray(16).also { SecureRandom().nextBytes(it) }
+
+                // ② AES-CBC(PKCS5) 加密 refreshToken，IV 拼在最前面
+                val aes = Cipher.getInstance("AES/CBC/PKCS5Padding")
+                aes.init(Cipher.ENCRYPT_MODE, SecretKeySpec(aesKey, "AES"), IvParameterSpec(iv))
+                val encTokenBytes = iv + aes.doFinal(token.toByteArray(Charsets.UTF_8))
+
+                // ③ 用桌面端公钥 RSA(PKCS#1 v1.5) 加密 AES 密钥
+                val pubJson = JSONObject(String(Base64.decode(pubKeyB64, Base64.URL_SAFE or Base64.NO_WRAP), Charsets.UTF_8))
+                val modulus = BigInteger(1, Base64.decode(pubJson.getString("m"), Base64.DEFAULT))
+                val exponent = BigInteger(1, Base64.decode(pubJson.getString("e"), Base64.DEFAULT))
+                val pub = KeyFactory.getInstance("RSA").generatePublic(RSAPublicKeySpec(modulus, exponent))
+                val rsa = Cipher.getInstance("RSA/ECB/PKCS1Padding")
+                rsa.init(Cipher.ENCRYPT_MODE, pub)
+                val encKeyBytes = rsa.doFinal(aesKey)
+
+                // ④ 上报
+                httpPost("confirm", mapOf(
+                    "appTicket" to appTicket,
+                    "encKey" to Base64.encodeToString(encKeyBytes, Base64.NO_WRAP),
+                    "encToken" to Base64.encodeToString(encTokenBytes, Base64.NO_WRAP),
+                    "duid" to PrefManager.SZLMID,
+                    "device" to myDeviceName(),
+                ))
+                true
+            }.getOrElse { e ->
+                runOnUiThread {
+                    Toast.makeText(this, "授权失败：${e.message}", Toast.LENGTH_LONG).show()
+                    handled = false
+                }
+                false
             }
-            .show()
+            if (ok) {
+                runOnUiThread {
+                    Toast.makeText(this, "已授权，请在电脑上确认登录", Toast.LENGTH_LONG).show()
+                    finish()
+                }
+            }
+        }
+    }
+
+    /**
+     * 极简 form POST（不引新依赖，用 `HttpURLConnection`）。
+     *
+     * 服务端读 `$_POST` 或 `php://input`，这里发 `x-www-form-urlencoded` ✓
+     * 返回 `data` 字段（`{"data":{...}}`），失败抛异常。
+     */
+    private fun httpPost(action: String, params: Map<String, String>): JSONObject {
+        val url = URL(QR_BASE + "?action=" + URLEncoder.encode(action, "UTF-8"))
+        val conn = (url.openConnection() as HttpURLConnection).apply {
+            requestMethod = "POST"
+            doOutput = true
+            connectTimeout = 15000
+            readTimeout = 15000
+            setRequestProperty("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8")
+        }
+        val body = params.entries.joinToString("&") { (k, v) ->
+            URLEncoder.encode(k, "UTF-8") + "=" + URLEncoder.encode(v, "UTF-8")
+        }
+        OutputStreamWriter(conn.outputStream, Charsets.UTF_8).use { it.write(body) }
+
+        val text = conn.inputStream.bufferedReader().use { it.readText() }
+        conn.disconnect()
+
+        val root = JSONObject(text)
+        if (root.has("data") && !root.isNull("data")) {
+            return root.getJSONObject("data")
+        }
+        throw IllegalStateException(root.optString("message", "服务端返回异常"))
     }
 
     override fun onDestroy() {
@@ -207,5 +323,8 @@ class ScanActivity : BaseActivity<ActivityScanBinding>() {
 
     private companion object {
         const val REQ_CAMERA = 1001
+
+        /** 扫码接口基址（只写基址 + 动作名，不放服务端实现细节） */
+        const val QR_BASE = "https://service.houlangs.cn/c001apk/qr/"
     }
 }
