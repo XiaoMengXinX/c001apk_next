@@ -174,8 +174,9 @@ class ScanActivity : BaseActivity<ActivityScanBinding>() {
         val uri = runCatching { android.net.Uri.parse(text) }.getOrNull()
         val requestId = uri?.getQueryParameter("r")
         val appTicket = uri?.getQueryParameter("t")
-        val pubKeyB64 = uri?.getQueryParameter("k")
-        if (requestId.isNullOrEmpty() || appTicket.isNullOrEmpty() || pubKeyB64.isNullOrEmpty()) {
+        // ★ 公钥**不再**从二维码里取 —— 那会让 QR 膨胀到 ~580 字符（手机难扫 ✗）
+        //   现在从 `scan` 的返回里拿（服务端 register 时已经存了那一份 ✓）
+        if (requestId.isNullOrEmpty() || appTicket.isNullOrEmpty()) {
             Toast.makeText(this, R.string.scanInvalid, Toast.LENGTH_LONG).show()
             handled = false
             return
@@ -191,8 +192,9 @@ class ScanActivity : BaseActivity<ActivityScanBinding>() {
             }
             val device = scanned.getOrNull()?.optString("device").orEmpty()
             val ip = scanned.getOrNull()?.optString("ip").orEmpty()
+            val pubKeyB64 = scanned.getOrNull()?.optString("publicKey").orEmpty()
             runOnUiThread {
-                if (!scanned.isSuccess || device.isEmpty()) {
+                if (!scanned.isSuccess || device.isEmpty() || pubKeyB64.isEmpty()) {
                     Toast.makeText(this, R.string.scanInvalid, Toast.LENGTH_LONG).show()
                     handled = false
                     return@runOnUiThread
