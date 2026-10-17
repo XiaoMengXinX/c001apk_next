@@ -283,4 +283,10 @@
     <string name="accountPassword">登录密码</string>
     <string name="accountEmail">邮箱</string>
     <string name="accountPhone">手机号</string>
+
+    <!-- 扫码登录（阶段 ④）-->
+    <string name="scanHint">将二维码放入框内，即可自动扫描</string>
+    <string name="scanConfirmTitle">确认登录</string>
+    <string name="scanConfirmMessage">您正在尝试登录「%1$s」，\nIP 地址位于 %2$s。\n\n确认登录吗？</string>
+    <string name="scanInvalid">这不是有效的 c001apk 登录二维码</string>
 </resources>

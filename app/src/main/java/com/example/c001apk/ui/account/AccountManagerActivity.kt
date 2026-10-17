@@ -2,7 +2,6 @@ package com.example.c001apk.ui.account
 
 import android.content.Intent
 import android.os.Bundle
-import android.widget.Toast
 import com.example.c001apk.R
 import com.example.c001apk.databinding.ActivityAccountManagerBinding
 import com.example.c001apk.ui.base.BaseActivity
@@ -36,9 +35,9 @@ class AccountManagerActivity : BaseActivity<ActivityAccountManagerBinding>() {
         // 返回箭头（MaterialToolbar 自带，BaseActivity 不管这个）
         binding.toolbar.setNavigationOnClickListener { finish() }
 
-        // ① 扫码登录 —— 阶段 ④ 之前先明确提示，不做假动作
+        // ① 扫码登录 —— 调摄像头扫桌面端二维码（阶段 ④）
         binding.cellScanLogin.setOnClickListener {
-            Toast.makeText(this, R.string.comingSoon, Toast.LENGTH_SHORT).show()
+            startActivity(Intent(this, ScanActivity::class.java))
         }
 
         // ② 底部红色退出登录
