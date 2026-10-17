@@ -56,3 +56,7 @@ _tools/
 # ===== 本地敏感文件：绝不入库（仓库是 public）=====
 CREDENTIALS.md
 szlm-re/
+
+# 交接笔记 / 演示素材（含本地细节，不入库）
+HANDOVER.md
+_demo/
