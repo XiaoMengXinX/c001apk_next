@@ -16,6 +16,7 @@ object PrefManager {
     private const val UID = "uid"
     private const val NAME = "name"
     private const val TOKEN = "token"
+    private const val REFRESH_TOKEN = "refreshToken"
 
     private val pref = context.getSharedPreferences("settings", MODE_PRIVATE)
 
@@ -54,6 +55,19 @@ object PrefManager {
     var token: String
         get() = pref.getString(TOKEN, "")!!
         set(value) = pref.edit().putString(TOKEN, value).apply()
+
+    /**
+     * 第二凭据：启动时用 [token] 调 `checkLoginInfo` 换来的（响应里带 `refreshToken`）。
+     *
+     * 早期研究结论（`_rev/win_ref/verify_token_live.py` + `DETAIL_5902.md:145`）：
+     * `login token` 与 `refreshToken` 在业务接口上**表现逐项一致** ——
+     * 它不是 OAuth 那种刷新令牌，而是**第二个等效凭据** ✓
+     *
+     * 所以非空时业务请求优先用它（见 `AddCookiesInterceptor`），生命周期 = 本次进程。
+     */
+    var refreshToken: String
+        get() = pref.getString(REFRESH_TOKEN, "")!!
+        set(value) = pref.edit().putString(REFRESH_TOKEN, value).apply()
 
     var userAvatar: String
         get() = pref.getString("userAvatar", "")!!

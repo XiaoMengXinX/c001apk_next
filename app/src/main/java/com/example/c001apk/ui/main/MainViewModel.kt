@@ -73,6 +73,8 @@ class MainViewModel @Inject constructor(
                                             URLEncoder.encode(login.username, "UTF-8")
                                         }
                                     PrefManager.token = login.token
+                                    // ★ 启动时换到的**第二凭据**，之后整个进程的业务请求优先用它
+                                    PrefManager.refreshToken = login.refreshToken
                                     PrefManager.userAvatar = login.userAvatar
                                 }
                             } else if (response.body()?.message == "登录信息有误") {
@@ -80,6 +82,7 @@ class MainViewModel @Inject constructor(
                                 PrefManager.uid = ""
                                 PrefManager.username = ""
                                 PrefManager.token = ""
+                                PrefManager.refreshToken = ""
                                 PrefManager.userAvatar = ""
                             }
 
