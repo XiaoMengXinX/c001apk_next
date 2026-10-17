@@ -451,6 +451,9 @@
         <activity
             android:name=".ui.others.AboutActivity"
             android:exported="false" />
+            <activity
+                android:name=".ui.account.AccountManagerActivity"
+                android:exported="false" />
         <activity
             android:name=".ui.follow.FFFListActivity"
             android:exported="false" />
