@@ -246,10 +246,19 @@ class ScanActivity : BaseActivity<ActivityScanBinding>() {
                 val aesKey = ByteArray(32).also { SecureRandom().nextBytes(it) }
                 val iv = ByteArray(16).also { SecureRandom().nextBytes(it) }
 
-                // ② AES-CBC(PKCS5) 加密 refreshToken，IV 拼在最前面
+                // ② 把「refreshToken + uid + username」打包成 JSON，整体 AES 加密
+                //
+                //   ★ 用户要求 uid / username 也**加密传输** ✓
+                //   ⇒ 服务端只能看到密文（它本来也不解析 encToken ✓）
+                //   ⇒ 桌面端用同一个 AES 密钥解开，再 JSON.parse 取三个字段 ✓
+                val payload = JSONObject().apply {
+                    put("token", token)
+                    put("uid", PrefManager.uid)
+                    put("username", PrefManager.username)
+                }.toString()
                 val aes = Cipher.getInstance("AES/CBC/PKCS5Padding")
                 aes.init(Cipher.ENCRYPT_MODE, SecretKeySpec(aesKey, "AES"), IvParameterSpec(iv))
-                val encTokenBytes = iv + aes.doFinal(token.toByteArray(Charsets.UTF_8))
+                val encTokenBytes = iv + aes.doFinal(payload.toByteArray(Charsets.UTF_8))
 
                 // ③ 用桌面端公钥 RSA(PKCS#1 v1.5) 加密 AES 密钥
                 val pubJson = JSONObject(String(Base64.decode(pubKeyB64, Base64.URL_SAFE or Base64.NO_WRAP), Charsets.UTF_8))
