@@ -803,7 +803,8 @@ class FeedFragment : BaseFragment<FragmentFeedBinding>() {
 
                 R.id.copy -> {
                     // 直接复制，跳过 CopyActivity（与长按复制一致）
-                    ClipboardUtil.copyText(requireContext(), text)
+                    // `text` 是 String?，而 ClipboardUtil.copyText 要求非空
+                    text?.let { ClipboardUtil.copyText(requireContext(), it) }
                 }
 
                 R.id.stickTop -> {
