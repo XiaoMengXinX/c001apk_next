@@ -271,4 +271,15 @@
     <string name="download_no_app">没有可用的应用</string>
     <string name="download_no_installer">没有找到安装程序</string>
     <string name="download_failed">下载失败：%1$s</string>
-    </resources>
+    
+    <!-- 账号管理页（阶段 ②）-->
+    <string name="accountManagerTitle">账号管理</string>
+    <string name="scanLogin">扫码登录</string>
+    <string name="comingSoon">敬请期待</string>
+    <string name="accountDevice">设备管理</string>
+    <string name="accountLoginHistory">登录记录</string>
+    <string name="accountBinding">第三方绑定</string>
+    <string name="accountSecurity">安全中心</string>
+    <string name="accountPassword">登录密码</string>
+    <string name="accountEmail">邮箱</string>
+</resources>
