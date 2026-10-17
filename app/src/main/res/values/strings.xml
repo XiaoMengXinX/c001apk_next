@@ -282,4 +282,5 @@
     <string name="accountSecurity">安全中心</string>
     <string name="accountPassword">登录密码</string>
     <string name="accountEmail">邮箱</string>
+    <string name="accountPhone">手机号</string>
 </resources>
