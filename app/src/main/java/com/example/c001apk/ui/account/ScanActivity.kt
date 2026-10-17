@@ -263,7 +263,12 @@ class ScanActivity : BaseActivity<ActivityScanBinding>() {
                 val encTokenBytes = iv + aes.doFinal(payload.toByteArray(Charsets.UTF_8))
 
                 // ③ 用桌面端公钥 RSA(PKCS#1 v1.5) 加密 AES 密钥
-                val pubJson = JSONObject(String(Base64.decode(pubKeyB64, Base64.URL_SAFE or Base64.NO_WRAP), Charsets.UTF_8))
+                //
+                //   ★ `scan` 返回的 `publicKey` 就是**原始 JSON 字符串** ✓
+                //     （桌面端 `jsonEncode({'m':..,'e':..})` 后直接上报，服务端原样存/回）
+                //   ⚠️ 别再 base64 解码 ✗ —— 旧版协议里二维码的 `k` 才是 base64(JSON)，
+                //      把 JSON 当 base64 解会直接抛 IllegalArgumentException ⇒「授权失败」
+                val pubJson = JSONObject(pubKeyB64)
                 val modulus = BigInteger(1, Base64.decode(pubJson.getString("m"), Base64.DEFAULT))
                 val exponent = BigInteger(1, Base64.decode(pubJson.getString("e"), Base64.DEFAULT))
                 val pub = KeyFactory.getInstance("RSA").generatePublic(RSAPublicKeySpec(modulus, exponent))
@@ -281,8 +286,23 @@ class ScanActivity : BaseActivity<ActivityScanBinding>() {
                 ))
                 true
             }.getOrElse { e ->
+                // ★ 加密类异常的 `message` 经常是 null ✗ ⇒ 必须带上**类名**才查得动
+                //   （2026-10-18 就吃过一次「授权失败：null」的亏 ✗）
+                val detail = buildString {
+                    append(e.javaClass.simpleName)
+                    e.message?.let { append(": ").append(it) }
+                    var c = e.cause
+                    var depth = 0
+                    while (c != null && depth < 2) {
+                        append(" ← ").append(c.javaClass.simpleName)
+                        c.message?.let { append(": ").append(it) }
+                        c = c.cause
+                        depth++
+                    }
+                }
+                android.util.Log.e("ScanActivity", "confirm 失败", e)
                 runOnUiThread {
-                    Toast.makeText(this, "授权失败：${e.message}", Toast.LENGTH_LONG).show()
+                    Toast.makeText(this, "授权失败：$detail", Toast.LENGTH_LONG).show()
                     handled = false
                 }
                 false
