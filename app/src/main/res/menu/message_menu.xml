@@ -2,12 +2,15 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <!-- 退出登录紧挨着设置图标（设置保持在最右） -->
+    <!--
+      账号管理：图标用「我的」那套（ic_mine_selector），紧挨着设置图标。
+      点进去是账号管理页（16 宫格 + 红色退出按钮），不再直接退出登录。
+    -->
     <item
         android:id="@+id/logout"
-        android:icon="@drawable/ic_logout"
+        android:icon="@drawable/ic_mine_selector"
         android:showAsAction="always"
-        android:title="@string/logout" />
+        android:title="@string/account" />
 
     <item
         android:id="@+id/settings"

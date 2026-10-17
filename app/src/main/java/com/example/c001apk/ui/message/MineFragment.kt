@@ -13,6 +13,7 @@ import com.example.c001apk.R
 import com.example.c001apk.adapter.HeaderAdapter
 import com.example.c001apk.adapter.LoadingState
 import com.example.c001apk.databinding.FragmentMineBinding
+import com.example.c001apk.ui.account.AccountManagerActivity
 import com.example.c001apk.ui.base.BaseFragment
 import com.example.c001apk.ui.login.WebLoginActivity
 import com.example.c001apk.ui.main.MainActivity
@@ -214,9 +215,10 @@ class MineFragment : BaseFragment<FragmentMineBinding>() {
             menu.findItem(R.id.logout)?.isVisible = isLogin
             setOnMenuItemClickListener {
                 when (it.itemId) {
-                    // 退出登录放在设置图标左边（工具栏最右侧仍是设置）
+                    // 账号管理（图标已改成 ic_mine_selector）：
+                    // 进账号管理页，退出登录按钮挪到那一页的最底下 ✗
                     R.id.logout -> {
-                        doLogout()
+                        IntentUtil.startActivity<AccountManagerActivity>(requireContext()) {}
                         true
                     }
 
