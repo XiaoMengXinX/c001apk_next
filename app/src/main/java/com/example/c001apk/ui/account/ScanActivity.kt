@@ -28,6 +28,7 @@ import java.io.OutputStreamWriter
 import java.net.HttpURLConnection
 import java.net.URL
 import java.net.URLEncoder
+import java.security.MessageDigest
 import java.security.SecureRandom
 import javax.crypto.Cipher
 import javax.crypto.spec.IvParameterSpec
@@ -174,9 +175,11 @@ class ScanActivity : BaseActivity<ActivityScanBinding>() {
         val uri = runCatching { android.net.Uri.parse(text) }.getOrNull()
         val requestId = uri?.getQueryParameter("r")
         val appTicket = uri?.getQueryParameter("t")
-        // ★ 公钥**不再**从二维码里取 —— 那会让 QR 膨胀到 ~580 字符（手机难扫 ✗）
-        //   现在从 `scan` 的返回里拿（服务端 register 时已经存了那一份 ✓）
-        if (requestId.isNullOrEmpty() || appTicket.isNullOrEmpty()) {
+        // ★ `h` = 桌面端本地算的公钥哈希前 32 位（hex）
+        //   用来**绑定**服务端下发的公钥：服务端换钥 ⇒ 哈希对不上 ⇒ 拒绝登录 ✓
+        //   （URL 由桌面端拼，服务端不参与 ⇒ 它没法把哈希一起换掉 ✓）
+        val keyHash = uri?.getQueryParameter("h")
+        if (requestId.isNullOrEmpty() || appTicket.isNullOrEmpty() || keyHash.isNullOrEmpty()) {
             Toast.makeText(this, R.string.scanInvalid, Toast.LENGTH_LONG).show()
             handled = false
             return
@@ -193,10 +196,28 @@ class ScanActivity : BaseActivity<ActivityScanBinding>() {
             val device = scanned.getOrNull()?.optString("device").orEmpty()
             val ip = scanned.getOrNull()?.optString("ip").orEmpty()
             val pubKeyB64 = scanned.getOrNull()?.optString("publicKey").orEmpty()
+            // ★ 先校验公钥哈希（服务端换钥 ⇒ 这里对不上 ⇒ 不弹确认框 ✗）
+            val actualHash = if (pubKeyB64.isEmpty()) "" else sha256Hex(pubKeyB64).take(32)
             runOnUiThread {
                 if (!scanned.isSuccess || device.isEmpty() || pubKeyB64.isEmpty()) {
                     Toast.makeText(this, R.string.scanInvalid, Toast.LENGTH_LONG).show()
                     handled = false
+                    return@runOnUiThread
+                }
+                // ★★ 公钥校验：服务端下发的那份必须与二维码里的哈希一致 ★★
+                //   不一致 ⇒ 说明服务端换了公钥（后门风险）⇒ 明确拒绝 ✓
+                if (!actualHash.equals(keyHash, ignoreCase = true)) {
+                    MaterialAlertDialogBuilder(this)
+                        .setTitle("公钥校验失败")
+                        .setMessage(
+                            "服务端下发的公钥与二维码中的指纹不一致。\n\n" +
+                                "二维码指纹：$keyHash\n" +
+                                "实际公钥指纹：$actualHash\n\n" +
+                                "出于安全考虑已中止登录。请重新生成二维码。"
+                        )
+                        .setPositiveButton(android.R.string.ok) { _, _ -> handled = false }
+                        .setCancelable(false)
+                        .show()
                     return@runOnUiThread
                 }
                 MaterialAlertDialogBuilder(this)
@@ -213,6 +234,12 @@ class ScanActivity : BaseActivity<ActivityScanBinding>() {
             }
         }
     }
+
+    /** SHA-256 → 小写十六进制（用于公钥指纹校验 ✓） */
+    private fun sha256Hex(s: String): String =
+        MessageDigest.getInstance("SHA-256")
+            .digest(s.toByteArray(Charsets.UTF_8))
+            .joinToString("") { "%02x".format(it) }
 
     /** 本机机型（上报用，明文 ✓ 协议允许） */
     private fun myDeviceName(): String {
