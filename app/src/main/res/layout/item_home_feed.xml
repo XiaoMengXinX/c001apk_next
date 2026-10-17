@@ -28,7 +28,6 @@
         android:clickable="true"
         android:focusable="true"
         android:onClick="@{(view) -> listener.onViewFeed(view, data.id, data.userInfo.uid, data.userInfo.username, data.userInfo.userAvatar, data.deviceTitle, data.message, String.valueOf(data.dateline), null, null, data)}"
-        android:onLongClick="@{(view) -> listener.onCopyText(view, data.message)}"
         app:cardBackgroundColor="@color/home_card_background_color"
         app:cardElevation="0dp"
         app:strokeWidth="0dp">
@@ -294,7 +293,6 @@
                 android:foreground="@drawable/selector_bg_12_trans"
                 android:lineSpacingMultiplier="1.2"
                 android:onClick="@{(view) -> listener.onViewFeed(view, data.id, data.userInfo.uid, data.userInfo.username, data.userInfo.userAvatar, data.deviceTitle, data.message, String.valueOf(data.dateline), null, true, data)}"
-                android:onLongClick="@{(view) -> listener.onCopyText(view, data.replyRows[0].message)}"
                 android:padding="10dp"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@id/extraPart"
@@ -308,7 +306,6 @@
                 android:background="@drawable/round_corners_12_win"
                 android:foreground="@drawable/selector_bg_12_trans"
                 android:onClick="@{(view) -> listener.onViewFeed(view, data.forwardSourceFeed.id, ``, ``, ``, ``, ``, ``, null, null, null)}"
-                android:onLongClick="@{(view) -> listener.onCopyText(view, data.forwardSourceFeed.message)}"
                 android:orientation="vertical"
                 android:padding="10dp"
                 android:visibility="@{data.forwardSourceFeed == null ? View.GONE : View.VISIBLE}"

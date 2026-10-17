@@ -30,7 +30,7 @@
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:onLongClick="@{(view) -> listener.onCopyText(view, data.message)}">
+        >
 
         <com.google.android.material.imageview.ShapeableImageView
             android:id="@+id/avatar"
@@ -343,7 +343,6 @@
             android:background="@drawable/round_corners_12"
             android:foreground="@drawable/selector_bg_12_trans"
             android:onClick="@{(view) -> listener.onViewFeed(view, data.forwardSourceFeed.id, ``, ``, ``, ``, ``, ``, null, null, null)}"
-            android:onLongClick="@{(view) -> listener.onCopyText(view, data.forwardSourceFeed.message)}"
             android:orientation="vertical"
             android:padding="10dp"
             android:visibility="@{data.forwardSourceFeed == null ? View.GONE : View.VISIBLE}"
