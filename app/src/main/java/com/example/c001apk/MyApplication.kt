@@ -62,6 +62,13 @@ class MyApplication : Application() {
             if (!ssaid.isNullOrEmpty()) PrefManager.ssaid = ssaid
         }
 
+        // HTTP 请求日志的目录（设置 → 高级 里可开关 / 导出 / 清空 ✓）
+        // 只是建一个目录 + 记下 context ✓ 开关关着时完全不写盘 ✓
+        runCatching {
+            com.example.c001apk.util.AppContextHolder.context = applicationContext
+            com.example.c001apk.util.HttpLog.init(this)
+        }
+
         // 云端配置（用户认证表 / 可信链接白名单）：先用上次缓存，再后台刷新一次。
         // 放在这里而不是各页面里拉，是因为认证标散落在列表、详情、消息各处，
         // 每处各拉一次没必要，而且首次进入时未必已经有表。

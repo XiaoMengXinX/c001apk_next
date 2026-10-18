@@ -306,6 +306,19 @@ object PrefManager {
     var ssaid: String
         get() = pref.getString("SSAID", "") ?: ""
         set(value) = pref.edit().putString("SSAID", value).apply()
+
+    /**
+     * 是否记录 HTTP 请求日志（设置 → 高级，**默认关闭** ✓）
+     *
+     * 打开后 `HttpLog.Interceptor` 会把每个请求的方法/地址/状态码/耗时/
+     * 响应体（前 2 KB）写到 `filesDir/http_logs/YYYYMMDD.log` ✓
+     * 敏感字段在本机脱敏（只留长度）✓ 见 `util/HttpLog.kt`
+     *
+     * ⚠️ 关着时拦截器只做一次 bool 判断 ✓ **零开销** ✓
+     */
+    var recordHttpLog: Boolean
+        get() = pref.getBoolean("recordHttpLog", false)
+        set(value) = pref.edit().putBoolean("recordHttpLog", value).apply()
     var isVerifySsl: Boolean
         get() = pref.getBoolean("verifySsl", true)
         set(value) = pref.edit().putBoolean("verifySsl", value).apply()
