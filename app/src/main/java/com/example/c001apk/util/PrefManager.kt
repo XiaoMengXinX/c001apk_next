@@ -282,6 +282,30 @@ object PrefManager {
      * 开启时走 [SslVerify] 的双重校验（平台 PKIX + 信任锚必须落在内置 CA 库），
      * 可挡住抓包工具/厂商私有根证书做中间人；关闭则回落成系统默认校验。
      */
+
+    /**
+     * 系统派发给**本应用**的设备标识（`Settings.Secure.ANDROID_ID`，即 SSAID）。
+     *
+     * ## 为什么加它（2026-10-18）
+     * `userRandomId` 是首启随机生成的 ✗ **清数据 / 重装就会变成新的一串** ✗
+     * ⇒ 统计里同一个人会被重复计数 ✗
+     *
+     * SSAID 在 **Android 8.0+** 是按「应用签名密钥 + 用户 + 设备」派生的：
+     *   - 清应用数据 ⇒ **不变** ✓
+     *   - 卸载重装   ⇒ **不变** ✓
+     *   - 恢复出厂   ⇒ 变 ✗（可接受）
+     *   - **别的应用拿到的值不同** ✓ ⇒ 不构成跨应用关联，隐私性质和随机 ID 相近 ✓
+     *     （Android 8 之前它是设备级共享的，那条隐私担忧已过时）
+     *
+     * ## 上报方式
+     * 与 `userRandomId` **同时**上报（客户端不替服务端做去重 ✗）：
+     *   X-App-userrandomid : 老的随机 ID（兼容历史数据 ✓）
+     *   X-Client-SSaid     : 新增的 SSAID ✓
+     * 云端用 `COALESCE(ssaid, uid)` 去重 ✓ —— 老客户端不带 ssaid 就回落随机 ID ✓
+     */
+    var ssaid: String
+        get() = pref.getString("SSAID", "") ?: ""
+        set(value) = pref.edit().putString("SSAID", value).apply()
     var isVerifySsl: Boolean
         get() = pref.getBoolean("verifySsl", true)
         set(value) = pref.edit().putBoolean("verifySsl", value).apply()

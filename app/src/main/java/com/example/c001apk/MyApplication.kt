@@ -52,6 +52,16 @@ class MyApplication : Application() {
         // 顺带保证自更新接口第一次打请求时就已经有值（见 PrefManager.userRandomId）
         PrefManager.userRandomId
 
+        // 系统派发的本应用设备标识（SSAID）：**清数据 / 重装都不变** ✓
+        // 用来给统计去重（随机 ID 在这两种情况下会变成新的一串 ✗）
+        // 只在启动时读一次并落盘，避免每帧都走 ContentResolver ✓
+        runCatching {
+            val ssaid = android.provider.Settings.Secure.getString(
+                contentResolver, android.provider.Settings.Secure.ANDROID_ID
+            )
+            if (!ssaid.isNullOrEmpty()) PrefManager.ssaid = ssaid
+        }
+
         // 云端配置（用户认证表 / 可信链接白名单）：先用上次缓存，再后台刷新一次。
         // 放在这里而不是各页面里拉，是因为认证标散落在列表、详情、消息各处，
         // 每处各拉一次没必要，而且首次进入时未必已经有表。
