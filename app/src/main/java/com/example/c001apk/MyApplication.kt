@@ -6,9 +6,9 @@ import android.content.Context
 import android.content.Intent
 import androidx.appcompat.app.AppCompatDelegate
 import com.example.c001apk.ui.others.BugHandlerActivity
+import com.example.c001apk.util.IosDeviceUtils
 import com.example.c001apk.util.PrefManager
 import com.example.c001apk.util.RemoteConfig
-import com.example.c001apk.util.RiskControlPrompter
 import com.example.c001apk.util.ShareLinkPrompter
 import com.example.c001apk.util.SignatureGuard
 import com.example.c001apk.util.SslErrorPrompter
@@ -28,11 +28,12 @@ class MyApplication : Application() {
 
         context = applicationContext
 
+        // 酷安 API 使用 iOS 设备身份：启动时先把持久化 UUID/机型准备好，
+        // 保证第一个网络请求之前身份已落盘（WebView 进程也会走同一初始化）
+        IosDeviceUtils.current()
+
         // SSL 校验失败 → 风险环境警告弹窗（跟踪前台 Activity）
         SslErrorPrompter.install(this)
-
-        // 风控命中（-415 账号过多 / err_request_captcha_v2）→ 「设备标识未配置」引导弹窗
-        RiskControlPrompter.install(this)
 
         // 每次进入应用读一次剪贴板：是酷安分享链接就弹「是否打开」
         ShareLinkPrompter.install(this)
@@ -61,21 +62,6 @@ class MyApplication : Application() {
             )
             if (!ssaid.isNullOrEmpty()) PrefManager.ssaid = ssaid
         }
-
-        // ★ 跟踪前台 Activity —— 「szlmId 失效」提示要弹窗，必须有 Activity ✗
-        registerActivityLifecycleCallbacks(object : ActivityLifecycleCallbacks {
-            override fun onActivityResumed(activity: android.app.Activity) =
-                com.example.c001apk.util.SzlmHint.track(activity)
-
-            override fun onActivityPaused(activity: android.app.Activity) =
-                com.example.c001apk.util.SzlmHint.track(null)
-
-            override fun onActivityCreated(activity: android.app.Activity, b: android.os.Bundle?) {}
-            override fun onActivityStarted(activity: android.app.Activity) {}
-            override fun onActivityStopped(activity: android.app.Activity) {}
-            override fun onActivitySaveInstanceState(activity: android.app.Activity, b: android.os.Bundle) {}
-            override fun onActivityDestroyed(activity: android.app.Activity) {}
-        })
 
         // HTTP 请求日志的目录（设置 → 高级 里可开关 / 导出 / 清空 ✓）
         // 只是建一个目录 + 记下 context ✓ 开关关着时完全不写盘 ✓

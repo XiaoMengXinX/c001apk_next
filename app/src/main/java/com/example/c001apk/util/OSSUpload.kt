@@ -14,7 +14,6 @@ import com.alibaba.sdk.android.oss.common.auth.OSSStsTokenCredentialProvider
 import com.alibaba.sdk.android.oss.model.ObjectMetadata
 import com.alibaba.sdk.android.oss.model.PutObjectRequest
 import com.alibaba.sdk.android.oss.model.PutObjectResult
-import com.example.c001apk.constant.Constants
 import com.example.c001apk.logic.model.OSSUploadPrepareResponse
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.Dispatchers
@@ -61,8 +60,8 @@ suspend fun ossUpload(
             val metadata = ObjectMetadata()
             metadata.contentType = typeList[index]
             metadata.contentMD5 = Base64.encodeToString(md5List[index], Base64.DEFAULT).trim()
-            // versionCode 必须与请求头 X-App-Code 一致（服务端校验），来源 PrefManager.VERSION_CODE
-            val versionCode = PrefManager.VERSION_CODE.ifEmpty { Constants.VERSION_CODE }
+            // versionCode 必须与请求头 X-App-Code 一致（服务端校验）；当前 API 走 iOS 实现
+            val versionCode = IosHeaders.APP_CODE
             val ossCallbackHeader = buildString {
                 append("{\"callbackBodyType\":\"application/json\",")
                 append("\"callbackHost\":\"api.coolapk.com\",")

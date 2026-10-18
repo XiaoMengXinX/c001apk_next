@@ -24,6 +24,7 @@ import com.example.c001apk.util.CookieUtil.atme
 import com.example.c001apk.util.CookieUtil.contacts_follow
 import com.example.c001apk.util.CookieUtil.feedlike
 import com.example.c001apk.util.ImageUtil
+import com.example.c001apk.util.IosDeviceUtils
 import com.example.c001apk.util.VerifyBadge
 import com.example.c001apk.util.IntentUtil
 import com.example.c001apk.util.PrefManager
@@ -186,6 +187,8 @@ class MineFragment : BaseFragment<FragmentMineBinding>() {
                 PrefManager.username = ""
                 PrefManager.token = ""
                 PrefManager.userAvatar = ""
+                // 退出后回到随机 UUID；下次登录会重新换取固定 CDID
+                IosDeviceUtils.onLogout()
                 (requireActivity() as? MainActivity)?.recreate()
             }
             show()

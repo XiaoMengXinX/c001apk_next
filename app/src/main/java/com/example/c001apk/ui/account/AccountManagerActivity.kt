@@ -6,6 +6,7 @@ import com.example.c001apk.R
 import com.example.c001apk.databinding.ActivityAccountManagerBinding
 import com.example.c001apk.ui.base.BaseActivity
 import com.example.c001apk.ui.main.MainActivity
+import com.example.c001apk.util.IosDeviceUtils
 import com.example.c001apk.util.PrefManager
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 
@@ -62,6 +63,8 @@ class AccountManagerActivity : BaseActivity<ActivityAccountManagerBinding>() {
                 // ★ 阶段 ① 新加的第二凭据，退出时一并清掉
                 PrefManager.refreshToken = ""
                 PrefManager.userAvatar = ""
+                // 退出后回到随机 UUID；下次登录会重新换取固定 CDID
+                IosDeviceUtils.onLogout()
 
                 startActivity(
                     Intent(this, MainActivity::class.java).apply {

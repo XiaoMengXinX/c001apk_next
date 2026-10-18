@@ -120,6 +120,72 @@ object PrefManager {
         get() = pref.getString("xAppDevice", "")!!
         set(value) = pref.edit().putString("xAppDevice", value).apply()
 
+    // ===== iOS 设备身份（酷安 API 当前使用这一组，见 IosDeviceUtils） =====
+    // 键统一加 ios_ 前缀，避免和上面历史遗留的 Android 机型字段互相覆盖。
+
+    var iosDeviceId: String
+        get() = pref.getString("ios_device_id", "")!!
+        set(value) = pref.edit().putString("ios_device_id", value).apply()
+
+    var iosModel: String
+        get() = pref.getString("ios_model", "")!!
+        set(value) = pref.edit().putString("ios_model", value).apply()
+
+    var iosHardwareId: String
+        get() = pref.getString("ios_hardware_id", "")!!
+        set(value) = pref.edit().putString("ios_hardware_id", value).apply()
+
+    /** 销售型号（如 `MTLD3CH/A`）；允许为空，为空时 `X-App-Device` 只写硬件 ID */
+    var iosSalesModel: String
+        get() = pref.getString("ios_sales_model", "")!!
+        set(value) = pref.edit().putString("ios_sales_model", value).apply()
+
+    var iosSystemVersion: String
+        get() = pref.getString("ios_system_version", "")!!
+        set(value) = pref.edit().putString("ios_system_version", value).apply()
+
+    /**
+     * 登录后从 CDID 服务换到的固定设备 ID（`D` 开头、48 字符）。
+     *
+     * 写接口（点赞/回复）只认这种服务端登记过的 ID；未登录时为空，此时用随机 UUID。
+     * 只在登录成功后写入一次，之后长期复用（见 [IosDeviceUtils]）。
+     */
+    var iosCdid: String
+        get() = pref.getString("ios_cdid", "")!!
+        set(value) = pref.edit().putString("ios_cdid", value).apply()
+
+    /** 换取 CDID 时上报的随机 IDFV；持久化后同一安装的重试使用同一份设备信息 */
+    var iosIdfv: String
+        get() = pref.getString("ios_idfv", "")!!
+        set(value) = pref.edit().putString("ios_idfv", value).apply()
+
+    /** 换取 CDID 时上报的随机安装 ID */
+    var iosInstallId: String
+        get() = pref.getString("ios_install_id", "")!!
+        set(value) = pref.edit().putString("ios_install_id", value).apply()
+
+    /**
+     * 一次性写入整组 iOS 设备身份。
+     *
+     * 用 `commit()` 而不是多次 `apply()`：首次生成 UUID 时若进程在写入完成前被杀，
+     * 下次启动会读到空值再生成第二个 UUID，导致同一安装出现两个设备身份。
+     */
+    internal fun saveIosDevice(
+        id: String,
+        model: String,
+        hardwareId: String,
+        salesModel: String,
+        systemVersion: String,
+    ) {
+        pref.edit()
+            .putString("ios_device_id", id)
+            .putString("ios_model", model)
+            .putString("ios_hardware_id", hardwareId)
+            .putString("ios_sales_model", salesModel)
+            .putString("ios_system_version", systemVersion)
+            .commit()
+    }
+
     var customToken: Boolean
         get() = pref.getBoolean("customToken", false)
         set(value) = pref.edit().putBoolean("customToken", value).apply()

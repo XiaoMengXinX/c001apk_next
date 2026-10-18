@@ -16,7 +16,9 @@ data class CheckResponse(
         val uid: String,
         val username: String,
         val token: String,
-        val refreshToken: String,
+        // iOS 接口的 checkLoginInfo 不返回 refreshToken（字段缺失），Gson 会写 null；
+        // 业务请求侧本来就有 `refreshToken.ifEmpty { token }` 兜底，这里保持可空即可
+        val refreshToken: String?,
         val userAvatar: String,
         val notifyCount: NotifyCount,
     )

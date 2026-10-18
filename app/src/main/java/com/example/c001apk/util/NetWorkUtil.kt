@@ -49,8 +49,11 @@ object NetWorkUtil {
     private val WHITESPACE = Regex("""\s+""")
 
     /** 句末标点跟着链接一起被复制过来是常态，校验前先削掉 */
-    private val TRAILING_PUNCTUATION =
-        charArrayOf('.', ',', '。', '，', '、', ')', '）', ']', '】', '"', '\'', '!', '！')
+    private val TRAILING_PUNCTUATION = charArrayOf(
+        '.', ',', '。', '，', '、', ')', '）', ']', '】',
+        // 用 "'"[0] 而不是 '\''：kapt 生成 Java 桩时会把转义单引号写坏（Kotlin 1.9 kapt bug）
+        '"', "'"[0], '!', '！'
+    )
 
     fun isWifiConnected(): Boolean {
         val cm = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager

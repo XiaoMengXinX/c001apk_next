@@ -6,7 +6,9 @@ import com.example.c001apk.constant.Constants
 import com.example.c001apk.logic.repository.BlackListRepo
 import com.example.c001apk.logic.repository.NetworkRepo
 import com.example.c001apk.logic.repository.SpamConfigRepo
+import com.example.c001apk.util.CdidClient
 import com.example.c001apk.util.CookieUtil
+import com.example.c001apk.util.IosDeviceUtils
 import com.example.c001apk.util.PrefManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
@@ -74,7 +76,7 @@ class MainViewModel @Inject constructor(
                                         }
                                     PrefManager.token = login.token
                                     // ★ 启动时换到的**第二凭据**，之后整个进程的业务请求优先用它
-                                    PrefManager.refreshToken = login.refreshToken
+                                    PrefManager.refreshToken = login.refreshToken.orEmpty()
                                     PrefManager.userAvatar = login.userAvatar
                                 }
                             } else if (response.body()?.message == "登录信息有误") {
@@ -84,6 +86,20 @@ class MainViewModel @Inject constructor(
                                 PrefManager.token = ""
                                 PrefManager.refreshToken = ""
                                 PrefManager.userAvatar = ""
+                            }
+
+                            // 登录后向 CDID 服务换一个服务端登记的固定设备 ID：
+                            // 随机 UUID 只能读，点赞/回复等写接口会被风控返回 -10。
+                            // 只在首次登录/退出后重新登录时请求一次，之后长期复用。
+                            if (PrefManager.isLogin && PrefManager.iosCdid.isBlank()) {
+                                runCatching {
+                                    val cdid = CdidClient.fetch(
+                                        IosDeviceUtils.current(),
+                                        IosDeviceUtils.idfv(),
+                                        IosDeviceUtils.installId(),
+                                    )
+                                    IosDeviceUtils.setCdid(cdid)
+                                }.onFailure { it.printStackTrace() }
                             }
 
                             try {

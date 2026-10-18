@@ -1,54 +1,34 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <!-- 机型检测：默认开，按本机 Build.* 重建设备串，帖子/回复下方显示本机机型 -->
-    <SwitchPreferenceCompat
-        android:key="reportRealDevice"
-        android:title="@string/report_real_device" />
+    <!-- 酷安 API 当前使用 iOS 实现：设备身份 = 已登记的设备 ID + 一组 iPhone 机型参数 -->
     <Preference
-        android:key="realDeviceInfo"
-        android:title="@string/real_device_info" />
+        android:key="iosDeviceId"
+        android:title="IOS_DEVICE_ID" />
+    <Preference
+        android:key="iosModel"
+        android:title="IOS_MODEL" />
+    <Preference
+        android:key="iosHardwareId"
+        android:title="IOS_HARDWARE_ID" />
+    <Preference
+        android:key="iosSalesModel"
+        android:title="IOS_SALES_MODEL" />
+    <Preference
+        android:key="iosSystemVersion"
+        android:title="IOS_SYSTEM_VERSION" />
 
     <Preference
-        android:key="VERSION_NAME"
-        android:title="VERSION_NAME" />
-    <Preference
-        android:key="API_VERSION"
-        android:title="API_VERSION" />
-    <Preference
-        android:key="VERSION_CODE"
-        android:title="VERSION_CODE" />
-    <Preference
-        android:key="MANUFACTURER"
-        android:title="MANUFACTURER" />
-    <Preference
-        android:key="BRAND"
-        android:title="BRAND" />
-    <Preference
-        android:key="MODEL"
-        android:title="MODEL" />
-    <Preference
-        android:key="BUILDNUMBER"
-        android:title="BUILDNUMBER" />
-    <Preference
-        android:key="SDK_INT"
-        android:title="SDK_INT" />
-    <Preference
-        android:key="ANDROID_VERSION"
-        android:title="ANDROID_VERSION" />
-    <Preference
-        android:key="USER_AGENT"
-        android:title="USER_AGENT" />
-    <Preference
-        android:enabled="false"
         android:key="xAppDevice"
         android:title="@string/xAppDevice" />
     <Preference
-        android:enabled="false"
         android:key="xAppToken"
         android:title="@string/xAppToken" />
     <Preference
         android:key="regenerate"
         android:title="@string/regenerate" />
+    <Preference
+        android:key="regenerateDeviceId"
+        android:title="重新生成设备 ID" />
 
 </PreferenceScreen>
