@@ -5,6 +5,7 @@ fake coolapk
 [![装机量](https://service.houlangs.cn/c001apk/stats.php?format=svg&metric=installs)](https://service.houlangs.cn/c001apk/stats.php)
 [![今日活跃](https://service.houlangs.cn/c001apk/stats.php?format=svg&metric=active)](https://service.houlangs.cn/c001apk/stats.php)
 [![今日新增](https://service.houlangs.cn/c001apk/stats.php?format=svg&metric=new)](https://service.houlangs.cn/c001apk/stats.php)
+[![7天内活跃](https://service.houlangs.cn/c001apk/stats.php?format=svg&metric=active7)](https://service.houlangs.cn/c001apk/stats.php)
 
 ![装机量历史](https://service.houlangs.cn/c001apk/stats.php?format=svg&metric=chart)
 
@@ -14,7 +15,13 @@ fake coolapk
 
 App 内「设置 → 关于」可检查更新：更新检查走自建接口，支持多线路下载。
 
-上面的徽章与曲线来自自建统计页，30 分钟刷新一次。统计只按**匿名随机 ID** 计（客户端自造，与账号、设备号都无关，一次安装一个）：超过 60 天没有请求的 ID 视为已卸载，从装机量里扣除；请求量不作为指标。
+上面的徽章与曲线来自[自建统计页](https://service.houlangs.cn/c001apk/stats.php)，30 分钟刷新一次。
+
+统计按**匿名设备标识**计，与账号无关：
+
+- 安卓 8.0+ 用系统派发给本应用的标识（`Settings.Secure.ANDROID_ID`）——**清数据、卸载重装都不会变**，因此同一台设备不会被重复计数；别的应用拿到的值不同，不构成跨应用关联。
+- 桌面端（Windows）没有对应能力，用本机首启生成的随机标识。
+- 超过 60 天没有请求的设备视为已卸载，从装机量里扣除；**请求量不作为指标**。
 
 ## 关于本项目 / Origin
 
