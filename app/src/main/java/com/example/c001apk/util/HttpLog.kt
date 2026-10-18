@@ -217,7 +217,7 @@ object HttpLog {
      * 请求体 / 响应体要用 `Buffer` 复制 ✗（不能直接消费 ✗ 否则业务拿不到 ✓）
      */
     class Interceptor : okhttp3.Interceptor {
-        override fun intercept(chain: Interceptor.Chain): Response {
+        override fun intercept(chain: okhttp3.Interceptor.Chain): Response {
             if (!PrefManager.recordHttpLog) return chain.proceed(chain.request())
 
             val req = chain.request()
@@ -255,7 +255,7 @@ object HttpLog {
         private fun bodyToString(req: Request): String {
             return try {
                 val b = req.body ?: return ""
-                if (b.isDuplex) return "<duplex>"
+                if (b.isDuplex()) return "<duplex>"
                 val buf = Buffer()
                 b.writeTo(buf)
                 buf.readUtf8()
