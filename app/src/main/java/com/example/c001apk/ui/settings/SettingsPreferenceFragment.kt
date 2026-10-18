@@ -228,11 +228,12 @@ class SettingsPreferenceFragment : PreferenceFragmentCompat() {
             true
         }
 
-        // 「数字联盟ID」：与启动时同一个知情同意窗（同意则自动获取，不同意则手动填入）
-        findPreference<Preference>("szlmId")?.setOnPreferenceClickListener {
-            activity?.let { SzlmIdPrompt.showConsent(it) }
-            true
-        }
+        // 「数字联盟ID」入口暂时隐藏：API 请求已改用 iOS CDID，不再需要 szlmId。
+        // 底层 PrefManager.SZLMID 仍被 WebView DID / 扫码 duid 引用，先保留代码便于恢复。
+        // findPreference<Preference>("szlmId")?.setOnPreferenceClickListener {
+        //     activity?.let { SzlmIdPrompt.showConsent(it) }
+        //     true
+        // }
 
         findPreference<Preference>("userBlackList")?.setOnPreferenceClickListener {
             IntentUtil.startActivity<BlackListActivity>(requireContext()) {
