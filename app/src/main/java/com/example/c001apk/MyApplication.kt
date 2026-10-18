@@ -62,6 +62,21 @@ class MyApplication : Application() {
             if (!ssaid.isNullOrEmpty()) PrefManager.ssaid = ssaid
         }
 
+        // ★ 跟踪前台 Activity —— 「szlmId 失效」提示要弹窗，必须有 Activity ✗
+        registerActivityLifecycleCallbacks(object : ActivityLifecycleCallbacks {
+            override fun onActivityResumed(activity: android.app.Activity) =
+                com.example.c001apk.util.SzlmHint.track(activity)
+
+            override fun onActivityPaused(activity: android.app.Activity) =
+                com.example.c001apk.util.SzlmHint.track(null)
+
+            override fun onActivityCreated(activity: android.app.Activity, b: android.os.Bundle?) {}
+            override fun onActivityStarted(activity: android.app.Activity) {}
+            override fun onActivityStopped(activity: android.app.Activity) {}
+            override fun onActivitySaveInstanceState(activity: android.app.Activity, b: android.os.Bundle) {}
+            override fun onActivityDestroyed(activity: android.app.Activity) {}
+        })
+
         // HTTP 请求日志的目录（设置 → 高级 里可开关 / 导出 / 清空 ✓）
         // 只是建一个目录 + 记下 context ✓ 开关关着时完全不写盘 ✓
         runCatching {

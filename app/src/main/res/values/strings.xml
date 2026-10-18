@@ -298,4 +298,9 @@
     <string name="settings_http_log_cleared">已清空 %1$d 个文件</string>
     <string name="settings_http_log_exported">已导出</string>
     <string name="settings_http_log_export_failed">导出失败：%1$s</string>
+
+    <!-- 数字联盟 ID 可能失效（对齐桌面端 utils/szlm_hint.dart）-->
+    <string name="szlm_hint_title">可能数字联盟 ID 已失效</string>
+    <string name="szlm_hint_message">服务器拒绝了这次请求（「评论接口异常」/「当前访问需要验证码」/「版本存在异常」）。\n\n这些都是**设备标识（数字联盟 ID / DUID）失效**时的固定提示 —— 不一定是账号问题，重新取一次号通常就能恢复。\n\n去「设置 → 高级 → 获取数字联盟 ID」点一次，按提示完成人机验证即可（桌面端同样如此）。</string>
+    <string name="szlm_hint_action">去重新取号</string>
 </resources>

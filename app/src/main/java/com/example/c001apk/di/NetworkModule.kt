@@ -100,6 +100,8 @@ object NetworkModule {
             // HTTP 请求日志（设置 → 高级 开关 ✓ 关着时零开销 ✓）
             // 放在最前：能记到**完整**的请求头与响应体 ✓
             .addInterceptor(HttpLog.Interceptor())
+            // 只读检查：命中「评论接口异常 / 需要验证码 / -419」⇒ 提示重新取号 ✓
+            .addInterceptor(com.example.c001apk.util.SzlmHint.Interceptor())
             .addInterceptor(SslErrorInterceptor)
             .addInterceptor(RiskControlInterceptor)
             .addInterceptor(
@@ -122,6 +124,8 @@ object NetworkModule {
             // HTTP 请求日志（设置 → 高级 开关 ✓ 关着时零开销 ✓）
             // 放在最前：能记到**完整**的请求头与响应体 ✓
             .addInterceptor(HttpLog.Interceptor())
+            // 只读检查：命中「评论接口异常 / 需要验证码 / -419」⇒ 提示重新取号 ✓
+            .addInterceptor(com.example.c001apk.util.SzlmHint.Interceptor())
             .addInterceptor(SslErrorInterceptor)
             .addInterceptor(RiskControlInterceptor)
             .addInterceptor(
