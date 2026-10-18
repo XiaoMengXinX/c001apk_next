@@ -33,7 +33,7 @@ object SignatureGuard {
 
     /** 官方包的签名证书 SHA-256（小写 hex，来自 CI 的 apksigner --print-certs 输出） */
     private const val OFFICIAL_SIGNATURE =
-        "9e7692d0d3f996476c81be80841fc638530eeb1285c8ba325b65ca47af190ec8"
+        "0cdc1f20f68160d15cca978ca5988d20f3d240bfb725a4a8e1b0f963875c920b"
 
     /** 本包签名是不是官方的；null = 还没查过（进程内只查一次） */
     private var official: Boolean? = null
