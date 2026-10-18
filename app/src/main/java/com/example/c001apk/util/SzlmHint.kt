@@ -62,8 +62,17 @@ object SzlmHint {
         currentActivity = activity
     }
 
-    /** 这条文案是不是「szlmId 失效」类 ✓ */
-    fun matches(message: String?): Boolean {
+    /**
+     * HTTP 567 = 酷安的风控页（整页 HTML）✓
+     *
+     * 实测：`X-App-Device` 里的 szlmId 换成**随机串**之后，连首页都会 567 ✗
+     * （比「200 + JSON 文案」严重得多 ✓）
+     */
+    const val BLOCKED_STATUS = 567
+
+    /** 这条文案 / 这个状态码是不是「szlmId 失效」类 ✓ */
+    fun matches(message: String?, statusCode: Int = 0): Boolean {
+        if (statusCode == BLOCKED_STATUS) return true
         if (message.isNullOrBlank()) return false
         return MARKERS.any { message.contains(it) }
     }
@@ -73,8 +82,8 @@ object SzlmHint {
      *
      * @param context 调用方的 Context（拿不到 Activity 时用它兜底 ✗ 这种情况下不弹 ✗）
      */
-    fun maybeShow(context: Context?, message: String?) {
-        if (!matches(message)) return
+    fun maybeShow(context: Context?, message: String?, statusCode: Int = 0) {
+        if (!matches(message, statusCode)) return
         val now = System.currentTimeMillis()
         if (now - lastShownAt < COOLDOWN_MS) return
         lastShownAt = now
@@ -114,6 +123,12 @@ object SzlmHint {
         override fun intercept(chain: okhttp3.Interceptor.Chain): Response {
             val response = chain.proceed(chain.request())
             try {
+                // 状态码优先：567 是整页 HTML 风控 ✗ 不用看 body ✓
+                if (response.code == BLOCKED_STATUS) {
+                    Log.w(TAG, "HTTP 567（风控页）⇒ 提示重新取号")
+                    maybeShow(AppContextHolder.context, null, BLOCKED_STATUS)
+                    return response
+                }
                 val len = response.body?.contentLength() ?: -1L
                 // 错误体一定很小 ✓ 大响应直接跳过 ✗（不白拷 200KB 的列表 ✗）
                 if (len in 0..MAX_PEEK) {
