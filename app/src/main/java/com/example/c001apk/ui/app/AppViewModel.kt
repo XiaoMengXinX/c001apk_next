@@ -16,6 +16,7 @@ import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import com.example.c001apk.util.ApiError
 
 @HiltViewModel(assistedFactory = AppViewModel.Factory::class)
 class AppViewModel @AssistedInject constructor(
@@ -64,7 +65,7 @@ class AppViewModel @AssistedInject constructor(
                             activityState.postValue(LoadingState.LoadingDone)
                         }
                     } else {
-                        activityState.postValue(LoadingState.LoadingFailed(LOADING_FAILED))
+                        activityState.postValue(LoadingState.LoadingFailed(ApiError.textOf(result.exceptionOrNull())))
                         result.exceptionOrNull()?.printStackTrace()
                     }
                 }
