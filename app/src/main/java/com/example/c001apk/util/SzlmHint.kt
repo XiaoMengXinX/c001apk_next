@@ -3,7 +3,6 @@ package com.example.c001apk.util
 import android.app.Activity
 import android.content.Context
 import android.util.Log
-import androidx.appcompat.app.AlertDialog
 import com.example.c001apk.R
 import com.example.c001apk.ui.others.SzlmIdWebActivity
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
@@ -112,7 +111,7 @@ object SzlmHint {
      * - 任何异常都吞掉 ✓ —— 绝不能影响正常请求 ✓
      */
     class Interceptor : okhttp3.Interceptor {
-        override fun intercept(chain: Interceptor.Chain): Response {
+        override fun intercept(chain: okhttp3.Interceptor.Chain): Response {
             val response = chain.proceed(chain.request())
             try {
                 val len = response.body?.contentLength() ?: -1L
