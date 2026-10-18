@@ -8,7 +8,6 @@ import com.example.c001apk.ui.app.AppActivity
 import com.example.c001apk.ui.coolpic.CoolPicActivity
 import com.example.c001apk.ui.feed.FeedActivity
 import com.example.c001apk.ui.follow.FFFListActivity
-import com.example.c001apk.ui.others.CopyActivity
 import com.example.c001apk.ui.others.WebViewActivity
 import com.example.c001apk.ui.topic.TopicActivity
 import com.example.c001apk.ui.user.UserActivity
@@ -176,10 +175,24 @@ interface ItemListener {
         }
     }
 
+    /**
+     * 长按复制。
+     *
+     * 原来是跳 `CopyActivity`（那边是个可选中的页面，要再手动全选+复制）；
+     * 改成**直接复制到剪贴板**，跳过中间页。
+     *
+     * 这个方法被 **12 个布局**的 `android:onLongClick` 调用
+     * （`item_feed_content` / `item_home_feed` / `item_home_feed_cover` /
+     *  `item_feed_article_text` / `item_feed_reply` / `item_feed_content_reply_item` /
+     *  `item_reply_to_reply_item` / `item_history_feed` / `item_message_content` …），
+     * 改这一处就全部生效。
+     *
+     * `ClipboardUtil.copyText` 里已经做了「登记是自己复制的」
+     * （`ShareLinkPromer.markSelfCopied`），所以切出去再回来不会被
+     * 剪贴板识别当成外部分享链接再问一遍。
+     */
     fun onCopyText(view: View, text: String?): Boolean {
-        IntentUtil.startActivity<CopyActivity>(view.context) {
-            putExtra("text", text)
-        }
+        text?.let { copyText(view.context, it) }
         return true
     }
 

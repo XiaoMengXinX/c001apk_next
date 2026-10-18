@@ -8,6 +8,12 @@
         android:name="android.permission.QUERY_ALL_PACKAGES"
         tools:ignore="QueryAllPackagesPermission" />
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <!-- 扫码登录（阶段 ④）：调用摄像头扫描桌面端二维码 -->
+    <uses-permission android:name="android.permission.CAMERA" />
+    <!-- 没有摄像头的设备也能装（扫码入口内部会提示不支持） -->
+    <uses-feature
+        android:name="android.hardware.camera"
+        android:required="false" />
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
 
     <application
@@ -451,6 +457,14 @@
         <activity
             android:name=".ui.others.AboutActivity"
             android:exported="false" />
+            <activity
+                android:name=".ui.account.AccountManagerActivity"
+                android:exported="false" />
+            <activity
+                android:name=".ui.account.ScanActivity"
+                android:exported="false"
+                android:screenOrientation="portrait"
+                android:theme="@style/Theme.C001apk" />
         <activity
             android:name=".ui.follow.FFFListActivity"
             android:exported="false" />

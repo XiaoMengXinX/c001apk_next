@@ -174,7 +174,6 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="10dp"
                 android:onClick="@{(view) -> listener.onViewFeed(view, data.forwardSourceFeed.id, ``, ``, ``, ``, ``, ``, null, null, null)}"
-                android:onLongClick="@{(view) -> listener.onCopyText(view, data.forwardSourceFeed.message)}"
                 android:visibility="@{data.forwardSourceFeed == null ? View.GONE : View.VISIBLE}"
                 app:cardElevation="0dp"
                 app:layout_constraintStart_toStartOf="parent"

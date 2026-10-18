@@ -19,6 +19,7 @@ import dagger.assisted.AssistedInject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
+import com.example.c001apk.util.ApiError
 
 /**
  * 应用详情页的各个区块：讨论的三种排序 + 版本历史 / 发现者 / 礼包 / 相关应用。
@@ -135,12 +136,17 @@ class AppContentViewModel @AssistedInject constructor(
                             footerState.postValue(FooterState.LoadingEnd(LOADING_END))
                         }
                     } else {
+                        // ★ 这里是**抛了异常/响应为空**的分支 ✗
+                        //   原来固定写 `LOADING_FAILED`（"加载失败"）⇒ 具体原因全丢 ✗
+                        //   现在走 ApiError ✓ —— 会从响应体的 message 里取人话 ✓
                         isEnd = true
+                        val err = result.exceptionOrNull()
+                        val text = ApiError.textOf(err)
                         if (listSize <= 0)
-                            loadingState.postValue(LoadingState.LoadingFailed(LOADING_FAILED))
+                            loadingState.postValue(LoadingState.LoadingFailed(text))
                         else
-                            footerState.postValue(FooterState.LoadingError(LOADING_FAILED))
-                        result.exceptionOrNull()?.printStackTrace()
+                            footerState.postValue(FooterState.LoadingError(text))
+                        err?.printStackTrace()
                     }
                     isRefreshing = false
                     isLoadMore = false

@@ -25,7 +25,6 @@
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:onLongClick="@{(view) -> listener.onCopyText(view, data.message)}"
         android:padding="10dp">
 
         <com.google.android.material.imageview.ShapeableImageView

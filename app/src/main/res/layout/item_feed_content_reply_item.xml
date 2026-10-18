@@ -28,7 +28,6 @@
         android:layout_height="wrap_content"
         android:clickable="true"
         android:focusable="true"
-        android:onLongClick="@{(view) -> listener.onCopyText(view, data.message)}"
         android:padding="10dp">
 
         <com.google.android.material.imageview.ShapeableImageView

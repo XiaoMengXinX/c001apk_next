@@ -181,6 +181,8 @@ object UpdateChecker {
             val builder = Request.Builder()
                 .url(BASE_URL)
                 .header("X-App-userrandomid", PrefManager.userRandomId)
+                // ★ SSAID：清数据 / 重装不变 ✓ 云端据此去重（老的随机 ID 照旧上报 ✓）
+                .header("X-Client-SSaid", PrefManager.ssaid)
                 .header("User-Agent", userAgent)
             installHeaders().forEach { (name, value) -> builder.header(name, value) }
             val request = builder.build()
@@ -208,6 +210,8 @@ object UpdateChecker {
             val builder = Request.Builder()
                 .url(url)
                 .header("X-App-userrandomid", PrefManager.userRandomId)
+                // ★ SSAID：清数据 / 重装不变 ✓ 云端据此去重（老的随机 ID 照旧上报 ✓）
+                .header("X-Client-SSaid", PrefManager.ssaid)
                 .header("User-Agent", userAgent)
             installHeaders().forEach { (name, value) -> builder.header(name, value) }
             client.newCall(builder.build()).execute().use { resp ->

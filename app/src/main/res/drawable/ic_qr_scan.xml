@@ -1,0 +1,46 @@
+<!--
+  扫码图标（新增 —— 工程里原本没有 ic_qr_scan）。
+
+  设计：二维码的三个定位角 + 若干数据点，单色 + evenOdd 挖空，
+  这样 `android:tint` 能正常上色（多路径多色会被 tint 统一覆盖，失去层次 ✗）。
+
+  尺寸与其它图标一致：24dp / viewport 24，参考 `ic_account.xml`。
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:tint="?attr/colorControlNormal"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+
+    <path
+        android:fillColor="@android:color/white"
+        android:fillType="evenOdd"
+        android:pathData="
+            M3,3 h6 v6 h-6 z
+            M4.2,4.2 h3.6 v3.6 h-3.6 z
+            M5.4,5.4 h1.2 v1.2 h-1.2 z
+            M15,3 h6 v6 h-6 z
+            M16.2,4.2 h3.6 v3.6 h-3.6 z
+            M17.4,5.4 h1.2 v1.2 h-1.2 z
+            M3,15 h6 v6 h-6 z
+            M4.2,16.2 h3.6 v3.6 h-3.6 z
+            M5.4,17.4 h1.2 v1.2 h-1.2 z
+            M11,3 h1.6 v1.6 h-1.6 z
+            M13,5 h1.6 v1.6 h-1.6 z
+            M11,7 h1.6 v1.6 h-1.6 z
+            M3,11 h1.6 v1.6 h-1.6 z
+            M5.5,12 h1.6 v1.6 h-1.6 z
+            M8,11 h1.6 v1.6 h-1.6 z
+            M11,11 h1.6 v1.6 h-1.6 z
+            M13,13 h1.6 v1.6 h-1.6 z
+            M11,15 h1.6 v1.6 h-1.6 z
+            M15,11 h1.6 v1.6 h-1.6 z
+            M17.5,12 h1.6 v1.6 h-1.6 z
+            M19,15 h2 v2 h-2 z
+            M15,15 h1.6 v1.6 h-1.6 z
+            M17,17 h1.6 v1.6 h-1.6 z
+            M19,19 h2 v2 h-2 z
+            M15,19 h1.6 v1.6 h-1.6 z
+        " />
+</vector>

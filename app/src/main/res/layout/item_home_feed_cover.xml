@@ -45,7 +45,6 @@
         android:clickable="true"
         android:focusable="true"
         android:onClick="@{(view) -> listener.onViewFeed(view, data.id, data.userInfo.uid, data.userInfo.username, data.userInfo.userAvatar, data.deviceTitle, data.message, String.valueOf(data.dateline), null, null, data)}"
-        android:onLongClick="@{(view) -> listener.onCopyText(view, data.message)}"
         app:cardBackgroundColor="@color/home_card_background_color"
         app:cardElevation="0dp"
         app:strokeWidth="0dp">

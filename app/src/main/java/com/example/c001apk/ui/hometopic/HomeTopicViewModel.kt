@@ -13,6 +13,7 @@ import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import com.example.c001apk.util.ApiError
 
 class HomeTopicViewModel @AssistedInject constructor(
     @Assisted val type: String,
@@ -66,7 +67,7 @@ class HomeTopicViewModel @AssistedInject constructor(
                             }
                         }
                     } else {
-                        loadingState.postValue(LoadingState.LoadingFailed(LOADING_FAILED))
+                        loadingState.postValue(LoadingState.LoadingFailed(ApiError.textOf(result.exceptionOrNull())))
                         result.exceptionOrNull()?.printStackTrace()
                     }
                 }
@@ -94,7 +95,7 @@ class HomeTopicViewModel @AssistedInject constructor(
                             }
                         }
                     } else {
-                        loadingState.postValue(LoadingState.LoadingFailed(LOADING_FAILED))
+                        loadingState.postValue(LoadingState.LoadingFailed(ApiError.textOf(result.exceptionOrNull())))
                         result.exceptionOrNull()?.printStackTrace()
                     }
                 }

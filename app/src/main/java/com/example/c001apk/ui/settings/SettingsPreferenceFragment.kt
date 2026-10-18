@@ -44,8 +44,16 @@ import rikka.core.util.ResourceUtils
 import rikka.material.preference.MaterialSwitchPreference
 import rikka.preference.SimpleMenuPreference
 import kotlin.system.exitProcess
+import com.example.c001apk.util.HttpLog
+import java.util.Locale
 
 class SettingsPreferenceFragment : PreferenceFragmentCompat() {
+
+    /** 待写出的导出内容（等用户选完保存位置再写 ✓） */
+    private var pendingExport: Pair<String, String>? = null
+
+    /** 导出 HTTP 日志的请求码（SAF：ACTION_CREATE_DOCUMENT ✓） */
+    private val REQ_EXPORT_HTTP_LOG = 1001
 
     override fun onCreateRecyclerView(
         inflater: LayoutInflater,
@@ -138,6 +146,7 @@ class SettingsPreferenceFragment : PreferenceFragmentCompat() {
 
         override fun getBoolean(key: String?, defValue: Boolean): Boolean {
             return when (key) {
+                "recordHttpLog" -> PrefManager.recordHttpLog
                 "blackDarkTheme" -> PrefManager.blackDarkTheme
                 "followSystemAccent" -> PrefManager.followSystemAccent
                 "showEmoji" -> PrefManager.showEmoji
@@ -154,6 +163,7 @@ class SettingsPreferenceFragment : PreferenceFragmentCompat() {
 
         override fun putBoolean(key: String?, value: Boolean) {
             when (key) {
+                "recordHttpLog" -> PrefManager.recordHttpLog = value
                 "blackDarkTheme" -> PrefManager.blackDarkTheme = value
                 "followSystemAccent" -> PrefManager.followSystemAccent = value
                 "showEmoji" -> PrefManager.showEmoji = value
@@ -302,6 +312,82 @@ class SettingsPreferenceFragment : PreferenceFragmentCompat() {
                 putExtra("type", "homeMenu")
             }
             true
+        }
+
+
+        // ── HTTP 请求日志（2026-10-18）──────────────────
+        // 开关走 PreferenceDataStore（见 getBoolean 分支 ✓）；这三项是「动作」
+        fun httpLogSummary(): String {
+            val (bytes, files, lineCount) = HttpLog.stats(requireContext())
+            if (bytes <= 0L) return getString(R.string.settings_http_log_empty)
+            val kb = bytes / 1024.0
+            val size = if (kb < 1024) String.format(Locale.US, "%.1f KB", kb)
+            else String.format(Locale.US, "%.2f MB", kb / 1024)
+            return "$size · $files 个文件 · $lineCount 条"
+        }
+
+        findPreference<Preference>("httpLogStats")?.apply {
+            summary = httpLogSummary()
+            setOnPreferenceClickListener {
+                summary = httpLogSummary()
+                true
+            }
+        }
+
+        findPreference<Preference>("httpLogExport")?.apply {
+            setOnPreferenceClickListener {
+                val (bytes, _, _) = HttpLog.stats(requireContext())
+                if (bytes <= 0L) {
+                    Toast.makeText(requireContext(), R.string.settings_http_log_empty, Toast.LENGTH_SHORT).show()
+                    return@setOnPreferenceClickListener true
+                }
+                // 导出前必须说清会包含什么 ✓
+                MaterialAlertDialogBuilder(requireContext()).apply {
+                    setTitle(R.string.settings_http_log_export_title)
+                    setMessage(R.string.settings_http_log_export_message)
+                    setNegativeButton(android.R.string.cancel, null)
+                    setPositiveButton(android.R.string.ok) { _, _ ->
+                        val (name, content) = HttpLog.exportAll(requireContext())
+                        pendingExport = name to content
+                        startActivityForResult(
+                            Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
+                                addCategory(Intent.CATEGORY_OPENABLE)
+                                type = "text/plain"
+                                putExtra(Intent.EXTRA_TITLE, name)
+                            },
+                            REQ_EXPORT_HTTP_LOG
+                        )
+                    }
+                    show()
+                }
+                true
+            }
+        }
+
+        findPreference<Preference>("httpLogClear")?.apply {
+            setOnPreferenceClickListener {
+                val (bytes, files, lineCount) = HttpLog.stats(requireContext())
+                if (bytes <= 0L) {
+                    Toast.makeText(requireContext(), R.string.settings_http_log_empty, Toast.LENGTH_SHORT).show()
+                    return@setOnPreferenceClickListener true
+                }
+                MaterialAlertDialogBuilder(requireContext()).apply {
+                    setTitle(R.string.settings_http_log_clear)
+                    setMessage("将删除 $files 个文件、$lineCount 条记录。此操作不可撤销。")
+                    setNegativeButton(android.R.string.cancel, null)
+                    setPositiveButton(android.R.string.ok) { _, _ ->
+                        val n = HttpLog.clear(requireContext())
+                        Toast.makeText(
+                            requireContext(),
+                            getString(R.string.settings_http_log_cleared, n),
+                            Toast.LENGTH_SHORT
+                        ).show()
+                        findPreference<Preference>("httpLogStats")?.summary = httpLogSummary()
+                    }
+                    show()
+                }
+                true
+            }
         }
 
         findPreference<Preference>("clearCache")?.apply {
@@ -509,6 +595,44 @@ class SettingsPreferenceFragment : PreferenceFragmentCompat() {
             arguments = Bundle().apply {
                 putString(PreferenceFragmentCompat.ARG_PREFERENCE_ROOT, rootKey)
             }
+        }
+    }
+
+    /**
+     * 用户选好保存位置 ⇒ 把日志写进去。
+     *
+     * 用 SAF（`ACTION_CREATE_DOCUMENT`）而不是直接写公共目录 ✓
+     * ⇒ 不需要任何存储权限 ✓（Android 10+ 分区存储下这是唯一干净的做法）
+     *
+     * ⚠️ 写失败要明确告诉用户 ✗（不能静默 ✗ 否则用户以为导出成功了 ✗）
+     */
+    @Deprecated("PreferenceFragmentCompat 里没有 ActivityResult API 的注册点")
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode != REQ_EXPORT_HTTP_LOG) return
+        val pending = pendingExport
+        pendingExport = null
+        if (resultCode != AppCompatActivity.RESULT_OK) return  // 用户取消 ✓
+        val uri = data?.data ?: return
+        if (pending == null) return
+        try {
+            requireContext().contentResolver.openOutputStream(uri)?.use { out ->
+                out.write(pending.second.toByteArray(Charsets.UTF_8))
+            }
+            Toast.makeText(
+                requireContext(),
+                R.string.settings_http_log_exported,
+                Toast.LENGTH_SHORT
+            ).show()
+        } catch (e: Throwable) {
+            Toast.makeText(
+                requireContext(),
+                getString(
+                    R.string.settings_http_log_export_failed,
+                    e.message ?: e.javaClass.simpleName
+                ),
+                Toast.LENGTH_LONG
+            ).show()
         }
     }
 

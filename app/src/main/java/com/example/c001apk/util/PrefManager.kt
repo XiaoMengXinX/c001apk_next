@@ -16,6 +16,7 @@ object PrefManager {
     private const val UID = "uid"
     private const val NAME = "name"
     private const val TOKEN = "token"
+    private const val REFRESH_TOKEN = "refreshToken"
 
     private val pref = context.getSharedPreferences("settings", MODE_PRIVATE)
 
@@ -54,6 +55,19 @@ object PrefManager {
     var token: String
         get() = pref.getString(TOKEN, "")!!
         set(value) = pref.edit().putString(TOKEN, value).apply()
+
+    /**
+     * 第二凭据：启动时用 [token] 调 `checkLoginInfo` 换来的（响应里带 `refreshToken`）。
+     *
+     * 早期研究结论（`_rev/win_ref/verify_token_live.py` + `DETAIL_5902.md:145`）：
+     * `login token` 与 `refreshToken` 在业务接口上**表现逐项一致** ——
+     * 它不是 OAuth 那种刷新令牌，而是**第二个等效凭据** ✓
+     *
+     * 所以非空时业务请求优先用它（见 `AddCookiesInterceptor`），生命周期 = 本次进程。
+     */
+    var refreshToken: String
+        get() = pref.getString(REFRESH_TOKEN, "")!!
+        set(value) = pref.edit().putString(REFRESH_TOKEN, value).apply()
 
     var userAvatar: String
         get() = pref.getString("userAvatar", "")!!
@@ -268,6 +282,43 @@ object PrefManager {
      * 开启时走 [SslVerify] 的双重校验（平台 PKIX + 信任锚必须落在内置 CA 库），
      * 可挡住抓包工具/厂商私有根证书做中间人；关闭则回落成系统默认校验。
      */
+
+    /**
+     * 系统派发给**本应用**的设备标识（`Settings.Secure.ANDROID_ID`，即 SSAID）。
+     *
+     * ## 为什么加它（2026-10-18）
+     * `userRandomId` 是首启随机生成的 ✗ **清数据 / 重装就会变成新的一串** ✗
+     * ⇒ 统计里同一个人会被重复计数 ✗
+     *
+     * SSAID 在 **Android 8.0+** 是按「应用签名密钥 + 用户 + 设备」派生的：
+     *   - 清应用数据 ⇒ **不变** ✓
+     *   - 卸载重装   ⇒ **不变** ✓
+     *   - 恢复出厂   ⇒ 变 ✗（可接受）
+     *   - **别的应用拿到的值不同** ✓ ⇒ 不构成跨应用关联，隐私性质和随机 ID 相近 ✓
+     *     （Android 8 之前它是设备级共享的，那条隐私担忧已过时）
+     *
+     * ## 上报方式
+     * 与 `userRandomId` **同时**上报（客户端不替服务端做去重 ✗）：
+     *   X-App-userrandomid : 老的随机 ID（兼容历史数据 ✓）
+     *   X-Client-SSaid     : 新增的 SSAID ✓
+     * 云端用 `COALESCE(ssaid, uid)` 去重 ✓ —— 老客户端不带 ssaid 就回落随机 ID ✓
+     */
+    var ssaid: String
+        get() = pref.getString("SSAID", "") ?: ""
+        set(value) = pref.edit().putString("SSAID", value).apply()
+
+    /**
+     * 是否记录 HTTP 请求日志（设置 → 高级，**默认关闭** ✓）
+     *
+     * 打开后 `HttpLog.Interceptor` 会把每个请求的方法/地址/状态码/耗时/
+     * 响应体（前 2 KB）写到 `filesDir/http_logs/YYYYMMDD.log` ✓
+     * 敏感字段在本机脱敏（只留长度）✓ 见 `util/HttpLog.kt`
+     *
+     * ⚠️ 关着时拦截器只做一次 bool 判断 ✓ **零开销** ✓
+     */
+    var recordHttpLog: Boolean
+        get() = pref.getBoolean("recordHttpLog", false)
+        set(value) = pref.edit().putBoolean("recordHttpLog", value).apply()
     var isVerifySsl: Boolean
         get() = pref.getBoolean("verifySsl", true)
         set(value) = pref.edit().putBoolean("verifySsl", value).apply()

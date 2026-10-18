@@ -46,7 +46,11 @@ object AddCookiesInterceptor : Interceptor {
             if (PrefManager.isLogin)
                 addHeader(
                     "Cookie",
-                    "uid=${PrefManager.uid}; username=${PrefManager.username}; token=${PrefManager.token}"
+                    // ★ 凭据优先级：refreshToken（启动时换到的第二凭据）> token（主凭据）。
+                    //   两者在业务接口上表现一致，见 PrefManager.refreshToken 的注释。
+                    //   ⚠️ 必须写成**表达式** —— `addHeader(...)` 的参数位置不能放 `val` ✗
+                    "uid=${PrefManager.uid}; username=${PrefManager.username}; " +
+                        "token=${PrefManager.refreshToken.ifEmpty { PrefManager.token }}"
                 )
             else addHeader("Cookie", SESSID)
         }

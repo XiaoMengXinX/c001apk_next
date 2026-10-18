@@ -20,6 +20,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
+import com.example.c001apk.util.ApiError
 
 @HiltViewModel(assistedFactory = UserViewModel.Factory::class)
 class UserViewModel @AssistedInject constructor(
@@ -57,7 +58,7 @@ class UserViewModel @AssistedInject constructor(
                         activityState.postValue(LoadingState.LoadingDone)
                         profileState.postValue(Event(Unit))
                     } else {
-                        activityState.postValue(LoadingState.LoadingFailed(LOADING_FAILED))
+                        activityState.postValue(LoadingState.LoadingFailed(ApiError.textOf(result.exceptionOrNull())))
                         result.exceptionOrNull()?.printStackTrace()
                     }
                 }
@@ -137,9 +138,9 @@ class UserViewModel @AssistedInject constructor(
                     } else {
                         isEnd = true
                         if (listSize <= 0)
-                            loadingState.postValue(LoadingState.LoadingFailed(LOADING_FAILED))
+                            loadingState.postValue(LoadingState.LoadingFailed(ApiError.textOf(result.exceptionOrNull())))
                         else
-                            footerState.postValue(FooterState.LoadingError(LOADING_FAILED))
+                            footerState.postValue(FooterState.LoadingError(ApiError.textOf(result.exceptionOrNull())))
                         result.exceptionOrNull()?.printStackTrace()
                     }
                     isRefreshing = false

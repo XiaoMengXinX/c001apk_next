@@ -271,4 +271,36 @@
     <string name="download_no_app">没有可用的应用</string>
     <string name="download_no_installer">没有找到安装程序</string>
     <string name="download_failed">下载失败：%1$s</string>
-    </resources>
+    
+    <!-- 账号管理页（阶段 ②）-->
+    <string name="accountManagerTitle">账号管理</string>
+    <string name="scanLogin">扫码登录</string>
+    <string name="comingSoon">敬请期待</string>
+
+    <string name="scanHint">将二维码放入框内，即可自动扫描</string>
+    <string name="scanConfirmTitle">确认登录</string>
+    <string name="scanConfirmMessage">您正在尝试登录「%1$s」，\nIP 地址位于 %2$s。\n\n确认登录吗？</string>
+    <string name="scanInvalid">这不是有效的 c001apk 登录二维码</string>
+
+    <!-- HTTP 请求日志（设置 → 高级）-->
+    <string name="settings_http_log">记录 HTTP 请求日志</string>
+    <string name="settings_http_log_summary">默认关闭。打开后记录每个请求的方法、地址、状态码、耗时与响应体（前 2 KB），用于排查问题。敏感字段（token、Cookie、设备标识等）会在本机脱敏，只保留长度</string>
+    <string name="settings_http_log_stats">当前日志：%1$s</string>
+    <string name="settings_http_log_empty">暂无日志</string>
+    <string name="settings_http_log_export">导出日志</string>
+    <string name="settings_http_log_clear">清空日志</string>
+    <string name="settings_http_log_export_title">导出 HTTP 请求日志</string>
+    <string name="settings_http_log_export_message">导出的文件会包含这段时间内每个请求的：方法、地址、HTTP 状态码、耗时，以及请求体与响应体的前 2 KB。
+
+以下内容已在本机脱敏（只保留长度，不含明文）：token、Cookie、authorization、密码、会话、设备标识等。
+
+仍然可能包含你访问过的接口路径与返回的公开内容。仅在你自己要排查问题时导出，并只发给开发者。</string>
+    <string name="settings_http_log_cleared">已清空 %1$d 个文件</string>
+    <string name="settings_http_log_exported">已导出</string>
+    <string name="settings_http_log_export_failed">导出失败：%1$s</string>
+
+    <!-- 数字联盟 ID 可能失效（对齐桌面端 utils/szlm_hint.dart）-->
+    <string name="szlm_hint_title">可能数字联盟 ID 已失效</string>
+    <string name="szlm_hint_message">服务器拒绝了这次请求（「评论接口异常」/「当前访问需要验证码」/「版本存在异常」）。\n\n这些都是**设备标识（数字联盟 ID / DUID）失效**时的固定提示 —— 不一定是账号问题，重新取一次号通常就能恢复。\n\n去「设置 → 高级 → 获取数字联盟 ID」点一次，按提示完成人机验证即可（桌面端同样如此）。</string>
+    <string name="szlm_hint_action">去重新取号</string>
+</resources>

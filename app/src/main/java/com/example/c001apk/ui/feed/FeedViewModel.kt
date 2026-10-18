@@ -25,6 +25,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import com.example.c001apk.util.ApiError
 
 @HiltViewModel(assistedFactory = FeedViewModel.Factory::class)
 class FeedViewModel @AssistedInject constructor(
@@ -252,7 +253,7 @@ class FeedViewModel @AssistedInject constructor(
                             footerState.postValue(FooterState.LoadingEnd(LOADING_END))
                         }
                     } else {
-                        footerState.postValue(FooterState.LoadingError(LOADING_FAILED))
+                        footerState.postValue(FooterState.LoadingError(ApiError.textOf(result.exceptionOrNull())))
                         result.exceptionOrNull()?.printStackTrace()
                     }
                 }
@@ -303,7 +304,7 @@ class FeedViewModel @AssistedInject constructor(
                             feedDataUpdateState.postValue(Event(true))
                         }
                     } else {
-                        activityState.postValue(LoadingState.LoadingFailed(LOADING_FAILED))
+                        activityState.postValue(LoadingState.LoadingFailed(ApiError.textOf(result.exceptionOrNull())))
                         result.exceptionOrNull()?.printStackTrace()
                     }
                 }
@@ -649,7 +650,7 @@ class FeedViewModel @AssistedInject constructor(
                             page++
                     } else {
                         if (!isLeft)
-                            footerState.postValue(FooterState.LoadingError(LOADING_FAILED))
+                            footerState.postValue(FooterState.LoadingError(ApiError.textOf(result.exceptionOrNull())))
                         result.exceptionOrNull()?.printStackTrace()
                     }
                     if (isLeft) {
@@ -703,7 +704,7 @@ class FeedViewModel @AssistedInject constructor(
                             footerState.postValue(FooterState.LoadingEnd(LOADING_END))
                         }
                     } else {
-                        footerState.postValue(FooterState.LoadingError(LOADING_FAILED))
+                        footerState.postValue(FooterState.LoadingError(ApiError.textOf(result.exceptionOrNull())))
                         result.exceptionOrNull()?.printStackTrace()
                     }
                     isRefreshing = false
@@ -750,7 +751,7 @@ class FeedViewModel @AssistedInject constructor(
                             footerState.postValue(FooterState.LoadingEnd(LOADING_END))
                         }
                     } else {
-                        footerState.postValue(FooterState.LoadingError(LOADING_FAILED))
+                        footerState.postValue(FooterState.LoadingError(ApiError.textOf(result.exceptionOrNull())))
                         result.exceptionOrNull()?.printStackTrace()
                     }
                     isRefreshing = false

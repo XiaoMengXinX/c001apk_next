@@ -139,8 +139,12 @@ class MessageCenterViewModel @Inject constructor(
                         // 服务端未读降到本机抵消数以下（通知被删、在别处读过）就收敛
                         MessageCenterSeenStore.syncSeenCount(category, server)
                         states[category] = SourceState().apply {
-                            target = MessageCenterSeenStore.unreadOf(category, server)
-                            if (target == 0) end = true
+                            // ★ 2026-10-18 用户要求：消息中心**显示全部**，不只是未读
+                            //   ⇒ 不再用「服务端未读数」当条数上限 ✗
+                            //   ⇒ 上限设成无穷，真正结束由 fetchPage 里的
+                            //     「data 为空 ⇒ state.end = true」判定 ✓
+                            //   未读数仍然要同步（宫格红点用它 ✓），只是不再决定条数 ✓
+                            target = Int.MAX_VALUE
                         }
                     }
                 }
@@ -197,8 +201,11 @@ class MessageCenterViewModel @Inject constructor(
     }
 
     /**
-     * 这一条算不算该分类的未读：小秘书在宫格里有独立入口（不重复列）、
-     * 本机展示过的不再算未读、黑名单用户静默。
+     * 这一条要不要进消息中心的列表。
+     *
+     * 2026-10-18 起：**不再看是否已读** ✓（用户要求显示全部消息 ✓）
+     * 仍然过滤掉：小秘书（宫格里有独立入口，避免重复列 ✓）、黑名单用户（静默 ✓）、
+     * 以及 id 为空的脏数据 ✓
      */
     private suspend fun isUnreadCandidate(
         category: String,
@@ -206,7 +213,10 @@ class MessageCenterViewModel @Inject constructor(
     ): Boolean {
         if (data.id.isBlank()) return false
         if (MessageKit.isSecretaryNotify(data)) return false
-        if (MessageCenterSeenStore.isSeen(category, data.id)) return false
+        // ★ 这里**不再**因为「本机已读」就排除本条 ✗
+        //   用户要求：消息中心显示**全部**消息，读完也留在列表里 ✓
+        //   （原来 isSeen 过滤 ⇒ 离开再进来就消失 ✗ 用户明确不喜欢 ✗）
+        //   已读仍然照常记账 ✓ —— 影响的只是宫格红点 ✓ 不是列表可见性 ✓
         val uid = when (category) {
             "feedLike" -> data.likeUid
             "atMe", "atCommentMe" -> data.uid

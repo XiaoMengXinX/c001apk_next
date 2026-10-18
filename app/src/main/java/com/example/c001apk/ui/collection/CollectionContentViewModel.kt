@@ -20,6 +20,7 @@ import dagger.assisted.AssistedInject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
+import com.example.c001apk.util.ApiError
 
 class CollectionContentViewModel @AssistedInject constructor(
     @Assisted("url") val url: String,
@@ -98,9 +99,9 @@ class CollectionContentViewModel @AssistedInject constructor(
                     } else {
                         isEnd = true
                         if (listSize <= 0)
-                            loadingState.postValue(LoadingState.LoadingFailed(LOADING_FAILED))
+                            loadingState.postValue(LoadingState.LoadingFailed(ApiError.textOf(result.exceptionOrNull())))
                         else
-                            footerState.postValue(FooterState.LoadingError(LOADING_FAILED))
+                            footerState.postValue(FooterState.LoadingError(ApiError.textOf(result.exceptionOrNull())))
                         result.exceptionOrNull()?.printStackTrace()
                     }
                     isRefreshing = false
