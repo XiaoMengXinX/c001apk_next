@@ -16,9 +16,11 @@ import android.webkit.WebChromeClient
 import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import android.widget.ProgressBar
 import android.widget.Toast
 import androidx.coordinatorlayout.widget.CoordinatorLayout
 import androidx.core.view.isVisible
+import androidx.lifecycle.lifecycleScope
 import androidx.webkit.WebSettingsCompat
 import androidx.webkit.WebViewFeature
 import com.example.c001apk.R
@@ -26,9 +28,15 @@ import com.example.c001apk.databinding.ActivityWebViewBinding
 import com.example.c001apk.ui.base.BaseActivity
 import com.example.c001apk.ui.main.MainActivity
 import com.example.c001apk.util.ActivityCollector
+import com.example.c001apk.util.CdidClient
+import com.example.c001apk.util.IosDeviceUtils
 import com.example.c001apk.util.PrefManager
 import com.example.c001apk.util.SslErrorPrompter
 import com.google.android.material.appbar.AppBarLayout.ScrollingViewBehavior
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.net.URLDecoder
 import java.net.URLEncoder
 
@@ -204,7 +212,52 @@ class WebLoginActivity : BaseActivity<ActivityWebViewBinding>() {
             }.getOrDefault(username)
         }
 
-        Toast.makeText(this, "登录成功", Toast.LENGTH_SHORT).show()
+        Toast.makeText(this, "登录成功，正在初始化设备…", Toast.LENGTH_SHORT).show()
+        finishLogin()
+    }
+
+    /**
+     * 登录后先换到 CDID，再回主界面。
+     *
+     * 随机 UUID 只能读，写接口会被风控拦截；而主界面重建时
+     * MainViewModel.isInit 会随 ViewModel 保留，getCheckLoginInfo() 不会重跑，
+     * 不在这里换的话整个进程会一直用登录前的 UUID。
+     */
+    private fun finishLogin() {
+        if (PrefManager.iosCdid.isNotBlank()) {
+            completeLogin()
+            return
+        }
+
+        val progress = ProgressBar(this).apply {
+            isIndeterminate = true
+            val pad = (24 * resources.displayMetrics.density).toInt()
+            setPadding(pad, pad, pad, pad)
+        }
+        val dialog = MaterialAlertDialogBuilder(this)
+            .setTitle("正在初始化设备")
+            .setView(progress)
+            .setCancelable(false)
+            .create()
+        dialog.show()
+
+        lifecycleScope.launch {
+            withContext(Dispatchers.IO) {
+                runCatching {
+                    CdidClient.fetch(
+                        IosDeviceUtils.current(),
+                        IosDeviceUtils.idfv(),
+                        IosDeviceUtils.installId(),
+                    )
+                }.onSuccess { IosDeviceUtils.setCdid(it) }
+                    .onFailure { it.printStackTrace() }
+            }
+            if (!isFinishing && !isDestroyed) dialog.dismiss()
+            completeLogin()
+        }
+    }
+
+    private fun completeLogin() {
         setResult(Activity.RESULT_OK)
         // 登录态变化后重建主界面（与原来表单登录的收尾逻辑一致）
         ActivityCollector.recreateActivity(MainActivity::class.java.name)
