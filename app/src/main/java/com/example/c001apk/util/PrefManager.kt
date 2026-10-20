@@ -89,32 +89,19 @@ object PrefManager {
         get() = pref.getString("xAppToken", "")!!
         set(value) = pref.edit().putString("xAppToken", value).apply()
 
-    /** 设备指纹版本：低于 TokenDeviceUtils.FINGERPRINT_VERSION 时会被强制重置为默认指纹 */
-    var DEVICE_FINGERPRINT_VERSION: Int
-        get() = pref.getInt("DEVICE_FINGERPRINT_VERSION", 0)
-        set(value) = pref.edit().putInt("DEVICE_FINGERPRINT_VERSION", value).apply()
-
     /**
      * 用户是否**显式**指定过自定义 X-App-Device。
      *
-     * 「设置 - 参数」里手填 X-App-Device、点「重新生成」、或改厂商/品牌/型号/版本号任一项都会置位；
-     * 未置位时 [com.example.c001apk.util.TokenDeviceUtils.getLastingDeviceCode] 会把设备串
-     * 强制拉回官方认可的那一组（否则详情页会被风控要求验证码）。
+     * 「设置 - 参数」里手填 X-App-Device、点「重新生成」、或改厂商/品牌/型号/版本号任一项都会置位。
+     * 改用 iOS 身份后它只剩一个用途：决定 [SzlmIdPrompt] 换 szlmId 时要不要就地重建设备串。
      */
     var customFingerprint: Boolean
         get() = pref.getBoolean("customFingerprint", false)
         set(value) = pref.edit().putBoolean("customFingerprint", value).apply()
 
-    /**
-     * 是否把**本机真实机型**上报给服务器（默认开）。
-     *
-     * 服务端用 `X-App-Device` 里的「厂商/品牌/型号」认机型，决定帖子/回复下方那行
-     * 「来自 xxx」。开启后每台手机上报自己的型号，不会再人人都是「一加13」；
-     * 关掉则回落到 [com.example.c001apk.constant.Constants.DEFAULT_DEVICE_CODE]。
-     */
-    var reportRealDevice: Boolean
-        get() = pref.getBoolean("reportRealDevice", true)
-        set(value) = pref.edit().putBoolean("reportRealDevice", value).apply()
+    // reportRealDevice 与 DEVICE_FINGERPRINT_VERSION 已删除：
+    // 前者只服务于「上报真实机型」（Android 设备串），后者只服务于 getLastingDeviceCode()
+    // 的指纹版本迁移。两者都随 Android 身份一起退出，改用 iOS 身份后无人读取。
 
     var xAppDevice: String
         get() = pref.getString("xAppDevice", "")!!
@@ -190,17 +177,9 @@ object PrefManager {
         get() = pref.getBoolean("customToken", false)
         set(value) = pref.edit().putBoolean("customToken", value).apply()
 
-    var VERSION_NAME: String
-        get() = pref.getString("VERSION_NAME", Constants.VERSION_NAME)!!
-        set(value) = pref.edit().putString("VERSION_NAME", value).apply()
-
-    var API_VERSION: String
-        get() = pref.getString("API_VERSION", Constants.API_VERSION)!!
-        set(value) = pref.edit().putString("API_VERSION", value).apply()
-
-    var VERSION_CODE: String
-        get() = pref.getString("VERSION_CODE", Constants.VERSION_CODE)!!
-        set(value) = pref.edit().putString("VERSION_CODE", value).apply()
+    // VERSION_NAME / VERSION_CODE / API_VERSION 已删除：它们原本给 Android 身份的请求头
+    // 与 UA 用，改用 iOS 身份后版本号来自 IosHeaders.APP_VERSION / APP_CODE，
+    // 这几个字段再没有读取方（继续留着会让后来人以为还在用）。
 
     var MANUFACTURER: String
         get() = pref.getString("MANUFACTURER", "")!!
@@ -218,17 +197,9 @@ object PrefManager {
         get() = pref.getString("BUILDNUMBER", "")!!
         set(value) = pref.edit().putString("BUILDNUMBER", value).apply()
 
-    var SDK_INT: String
-        get() = pref.getString("SDK_INT", "")!!
-        set(value) = pref.edit().putString("SDK_INT", value).apply()
-
-    var ANDROID_VERSION: String
-        get() = pref.getString("ANDROID_VERSION", "")!!
-        set(value) = pref.edit().putString("ANDROID_VERSION", value).apply()
-
-    var USER_AGENT: String
-        get() = pref.getString("USER_AGENT", "")!!
-        set(value) = pref.edit().putString("USER_AGENT", value).apply()
+    // SDK_INT / ANDROID_VERSION / USER_AGENT 已删除：同上，Android 身份与 UA 都不再使用。
+    // 尤其是 USER_AGENT —— 它曾被 MainViewModel 用这几个空字段拼成
+    // `Dalvik/2.1.0 (Linux; U; Android ;  )` 这种极好识别的假 UA 发给图片 CDN。
 
     /**
      * 数字联盟 ID：设备串（`X-App-Device`）的首字段，同时用作 WebView 的 `DID` cookie。
