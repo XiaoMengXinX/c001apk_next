@@ -110,7 +110,7 @@ object SzlmIdParams {
      * app 真实 UA：取系统 WebView 默认 UA（`Mozilla/5.0 (Linux; Android …) Chrome/…`）。
      *
      * 明确不用两种假 UA：OkHttp 自动附加的 `okhttp/4.x`，以及给酷安接口伪装用的
-     * `Dalvik/… +CoolMarket/…`（[Constants.USER_AGENT]）。
+     * iOS UA（[IosDeviceUtils.coolapkUserAgent]）。
      * 主线程/WebView 不可用时回落到自报名格式，宁可信息少也不给假 UA。
      */
     private fun realUserAgent(ctx: Context): String =

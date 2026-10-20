@@ -99,13 +99,15 @@ object SzlmIdPrompt {
      * szlmId 与机型是两件独立的事：这里只重建设备串本身，既不写机型字段，
      * 也不碰 [PrefManager.customFingerprint] —— 换 ID 不该把用户设过的机型冲掉。
      *
-     * 自定义过机型时必须就地重造，否则 [TokenDeviceUtils.getLastingDeviceCode]
-     * 会直接返回旧串，首字段还停在旧 szlmId；其余情况留给它在下次请求时按
-     * 「上报真实机型」开关重建（两条分支都用新 szlmId 算值，必然与旧串不同）。
+     * 只在用户自定义过机型时就地重造：其余情况设备串本来就用默认那一组，
+     * 由 [TokenDeviceUtils.buildDeviceCode] 在读取时按当前 szlmId 现算，不需要提前写回。
+     *
+     * 注意：改用 iOS 身份后这条设备串已不参与请求头（请求走 [IosHeaders]），
+     * 只影响设置页展示的 `X-App-Device`。
      */
     private fun rebuildDeviceString() {
         if (PrefManager.customFingerprint) {
-            PrefManager.xAppDevice = TokenDeviceUtils.getDeviceCode(false)
+            PrefManager.xAppDevice = TokenDeviceUtils.getDeviceCode()
         }
     }
 }
