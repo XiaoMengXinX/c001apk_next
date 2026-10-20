@@ -2,7 +2,6 @@ package com.example.c001apk.ui.main
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.c001apk.constant.Constants
 import com.example.c001apk.logic.repository.BlackListRepo
 import com.example.c001apk.logic.repository.NetworkRepo
 import com.example.c001apk.logic.repository.SpamConfigRepo
@@ -31,22 +30,10 @@ class MainViewModel @Inject constructor(
         viewModelScope.launch(Dispatchers.IO) {
             networkRepo.getAppInfo(id)
                 .collect { result ->
-                    val appInfo = result.getOrNull()
-                    if (appInfo?.data != null) {
-                        try {
-                            // 跟随官方最新版本号，保持请求头“现代”；空值不覆盖，避免生成无效 token
-                            val versionName = appInfo.data.apkversionname
-                            val versionCode = appInfo.data.apkversioncode
-                            if (!versionName.isNullOrBlank()) PrefManager.VERSION_NAME = versionName
-                            if (!versionCode.isNullOrBlank()) PrefManager.VERSION_CODE = versionCode
-                            PrefManager.API_VERSION = Constants.API_VERSION
-                            PrefManager.USER_AGENT =
-                                "Dalvik/2.1.0 (Linux; U; Android ${PrefManager.ANDROID_VERSION}; ${PrefManager.MODEL} ${PrefManager.BUILDNUMBER}) (#Build; ${PrefManager.BRAND}; ${PrefManager.MODEL}; ${PrefManager.BUILDNUMBER}; ${PrefManager.ANDROID_VERSION}) +CoolMarket/${PrefManager.VERSION_NAME}-${PrefManager.VERSION_CODE}-${Constants.MODE}"
-                        } catch (e: Exception) {
-                            e.printStackTrace()
-                        }
-                    }
-
+                    // 这里原本会把酷安官方最新版本号写进 PrefManager 并据此拼 Android UA，
+                    // 供 Android 身份下的请求头使用。改用 iOS 身份后版本号来自
+                    // IosHeaders.APP_VERSION / APP_CODE，UA 也由 IosHeaders 生成，
+                    // 那套字段再没有人读，继续写只会留下拼空的假 UA（见 ImageUtil）。
                     getCheckLoginInfo()
                 }
         }

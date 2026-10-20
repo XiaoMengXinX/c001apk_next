@@ -119,6 +119,25 @@ object IosDeviceUtils {
 
     fun userAgent(device: IosDevice = current()): String = IosHeaders.userAgent(device)
 
+    /**
+     * 酷安域名请求统一用的 UA（图片 CDN、加载酷安页面的 WebView）。
+     *
+     * 与 API 请求头里的 `User-Agent` 是同一份 iOS UA，来源是持久化的设备档案，
+     * 所以多次启动之间也一致。图片 CDN 前面的 EdgeOne 按 UA 放行，
+     * 不带或带错会回 567（表现为图片全黑）。
+     */
+    fun coolapkUserAgent(): String = userAgent()
+
+    /**
+     * WebView 该用的 UA：酷安域名给 iOS UA（和 API、图片一致），
+     * 其它站点返回 null 表示「不设置」，沿用系统 WebView 默认 UA。
+     *
+     * 为什么要区分：WebViewActivity 也会打开任意第三方链接，
+     * 给别人的站点发 `+iCoolMarket` 的 iOS UA 既不合适，也容易让站点判定异常。
+     */
+    fun webUserAgentFor(url: String?): String? =
+        if (LinkGuard.hostOf(url).endsWith("coolapk.com")) coolapkUserAgent() else null
+
     fun appToken(
         timestampSeconds: Long = nowSeconds(),
         device: IosDevice = current(),

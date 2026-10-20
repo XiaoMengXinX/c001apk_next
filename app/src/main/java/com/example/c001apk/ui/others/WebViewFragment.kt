@@ -19,6 +19,7 @@ import android.webkit.WebViewClient
 import androidx.fragment.app.Fragment
 import androidx.webkit.WebSettingsCompat
 import androidx.webkit.WebViewFeature
+import com.example.c001apk.util.IosDeviceUtils
 import com.example.c001apk.util.PrefManager
 import com.example.c001apk.util.SslErrorPrompter
 import java.net.URISyntaxException
@@ -78,7 +79,7 @@ class WebViewFragment : Fragment() {
             javaScriptCanOpenWindowsAutomatically = true
             loadsImagesAutomatically = true
             allowFileAccess = false
-            userAgentString = PrefManager.USER_AGENT
+            userAgentString = IosDeviceUtils.coolapkUserAgent()
             if (SDK_INT >= 32) {
                 if (WebViewFeature.isFeatureSupported(WebViewFeature.ALGORITHMIC_DARKENING)) {
                     WebSettingsCompat.setAlgorithmicDarkeningAllowed(this, true)

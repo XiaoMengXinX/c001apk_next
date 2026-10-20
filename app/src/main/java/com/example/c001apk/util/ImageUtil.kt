@@ -31,7 +31,6 @@ import com.bumptech.glide.load.resource.bitmap.FitCenter
 import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions.withCrossFade
 import com.bumptech.glide.request.transition.Transition
 import com.example.c001apk.R
-import com.example.c001apk.constant.Constants.USER_AGENT
 import com.example.c001apk.util.ClipboardUtil.copyText
 import com.example.c001apk.util.FileUtil.copyFile
 import com.example.c001apk.util.FileUtil.createFileByDeleteOldFile
@@ -69,6 +68,18 @@ object ImageUtil {
     private lateinit var imagesDir: File
     private lateinit var imageCheckDir: File
 
+    /**
+     * 取图时带的 UA。
+     *
+     * 必须与 API 请求头里的 UA 一致（都是 iOS 身份，见 [IosDeviceUtils.coolapkUserAgent]）：
+     * 图片 CDN 前面的 EdgeOne 按 UA 放行，不带或带错会回 567，表现是图片全黑。
+     * 每次现取而不是缓存常量，设备档案变更（重新生成机型）后立即跟上。
+     */
+    private fun imageHeaders(): LazyHeaders =
+        LazyHeaders.Builder()
+            .addHeader("User-Agent", IosDeviceUtils.coolapkUserAgent())
+            .build()
+
     @SuppressLint("CheckResult")
     fun showIMG(view: ImageView, url: String?, isCover: Boolean = false) {
         if (!url.isNullOrEmpty()) {
@@ -77,7 +88,7 @@ object ImageUtil {
             val localPath = url.localImagePath
             val model: Any = if (localPath != null) File(localPath) else GlideUrl(
                 url.http2https,
-                LazyHeaders.Builder().addHeader("User-Agent", USER_AGENT).build()
+                imageHeaders()
             )
             Glide
                 .with(view).apply {
@@ -119,7 +130,7 @@ object ImageUtil {
         if (url.isNullOrEmpty()) return
         val newUrl = GlideUrl(
             url,
-            LazyHeaders.Builder().addHeader("User-Agent", USER_AGENT).build()
+            imageHeaders()
         )
         val request = Glide.with(view).load(newUrl)
         if (width > 0 && height > 0) {
@@ -155,7 +166,7 @@ object ImageUtil {
                     .load(
                         GlideUrl(
                             url,
-                            LazyHeaders.Builder().addHeader("User-Agent", USER_AGENT).build()
+                            imageHeaders()
                         )
                     )
                     .diskCacheStrategy(DiskCacheStrategy.ALL)
@@ -186,7 +197,7 @@ object ImageUtil {
                     .load(
                         GlideUrl(
                             url.http2https,
-                            LazyHeaders.Builder().addHeader("User-Agent", USER_AGENT).build()
+                            imageHeaders()
                         )
                     )
                     .diskCacheStrategy(DiskCacheStrategy.ALL)
@@ -567,7 +578,7 @@ object ImageUtil {
         val localPath = url?.localImagePath
         val model: Any = if (localPath != null) File(localPath) else GlideUrl(
             url?.imageUrl,
-            LazyHeaders.Builder().addHeader("User-Agent", USER_AGENT).build()
+            imageHeaders()
         )
         Glide.with(context).downloadOnly().load(model).into(object : FileTarget() {
             override fun onLoadFailed(errorDrawable: Drawable?) {
