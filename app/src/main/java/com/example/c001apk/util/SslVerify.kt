@@ -2,7 +2,6 @@ package com.example.c001apk.util
 
 import android.util.Log
 import com.example.c001apk.MyApplication
-import com.example.c001apk.constant.Constants
 import okhttp3.OkHttpClient
 import java.security.KeyStore
 import java.security.SecureRandom
@@ -203,16 +202,15 @@ object SslVerify {
      * 为什么不能返回 null：模块默认拿到的客户端没有 User-Agent，而图片 CDN
      * （image.coolapk.com 前面的腾讯云 EdgeOne）会按 UA 放行，UA 不对直接回
      * 567 + 「请求已被站点的安全策略拦截」的 HTML 页 —— 表现就是点开大图黑屏。
-     * 这里统一补上酷安 UA（与 [AddCookiesInterceptor] 同一个取值口径：优先用
-     * 运行时抓到的 [PrefManager.USER_AGENT]，为空回落到 [Constants.USER_AGENT]），
-     * 请求时才读值，所以 app 启动后 UA 被刷新也能跟上。
+     * 这里统一补上酷安 UA：与 [AddCookiesInterceptor] 同一份 iOS UA
+     * （[IosDeviceUtils.coolapkUserAgent]），请求时才读值，设备档案变更后也能跟上。
      *
      * SSL 校验沿用系统默认（不套 [apply] 的白名单），与改动前的行为一致；
      * 只有开了「网络传输调试模式」才整体放行，方便抓包。
      */
     fun imageClient(): OkHttpClient {
         val builder = OkHttpClient.Builder().addInterceptor { chain ->
-            val ua = PrefManager.USER_AGENT.ifEmpty { Constants.USER_AGENT }
+            val ua = IosDeviceUtils.coolapkUserAgent()
             chain.proceed(chain.request().newBuilder().header("User-Agent", ua).build())
         }
         return if (PrefManager.isSslDebug) applyDebug(builder).build() else builder.build()

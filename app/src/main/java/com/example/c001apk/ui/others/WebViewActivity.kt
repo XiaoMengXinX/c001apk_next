@@ -37,6 +37,7 @@ import com.example.c001apk.R
 import com.example.c001apk.databinding.ActivityWebViewBinding
 import com.example.c001apk.ui.base.BaseActivity
 import com.example.c001apk.util.ClipboardUtil.copyText
+import com.example.c001apk.util.IosDeviceUtils
 import com.example.c001apk.util.LinkGuard
 import com.example.c001apk.util.PrefManager
 import com.example.c001apk.util.SslErrorPrompter
@@ -165,7 +166,8 @@ class WebViewActivity : BaseActivity<ActivityWebViewBinding>() {
                 javaScriptCanOpenWindowsAutomatically = true
                 loadsImagesAutomatically = true
                 allowFileAccess = false
-                userAgentString = PrefManager.USER_AGENT
+                // 酷安域名用 iOS UA（与 API/图片一致）；第三方链接沿用系统 WebView 默认 UA
+                IosDeviceUtils.webUserAgentFor(url)?.let { userAgentString = it }
                 if (SDK_INT >= 32) {
                     if (WebViewFeature.isFeatureSupported(WebViewFeature.ALGORITHMIC_DARKENING)) {
                         WebSettingsCompat.setAlgorithmicDarkeningAllowed(this, true)
