@@ -240,6 +240,9 @@ dependencies {
     implementation(libs.media3.exoplayer)
     implementation(libs.media3.ui)
     testImplementation(libs.junit)
+    // 单测里用真实 org.json：Android SDK 自带的那套在 JVM 上是 "not mocked" 桩，
+    // 任何 JSONObject 调用都会抛异常（被 runCatching 吞掉后表现为「解析返回 null」）
+    testImplementation(libs.org.json)
     implementation(libs.oss.android.sdk)
     implementation(libs.utilcode)
 

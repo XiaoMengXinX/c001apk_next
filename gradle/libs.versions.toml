@@ -17,6 +17,7 @@ immersionbar = "3.2.2"
 jbcrypt = "0.4"
 jsoup = "1.17.2"
 junit = "4.13.2"
+json = "20240303"
 junit-version = "1.1.5"
 kotlin = "1.9.24"
 kotlin-stdlib = "1.9.24"
@@ -84,6 +85,7 @@ immersionbar = { module = "com.geyifeng.immersionbar:immersionbar", version.ref 
 jsoup = { module = "org.jsoup:jsoup", version.ref = "jsoup" }
 jbcrypt = { module = "org.mindrot:jbcrypt", version.ref = "jbcrypt" }
 junit = { module = "junit:junit", version.ref = "junit" }
+org-json = { module = "org.json:json", version.ref = "json" }
 kotlin-stdlib = { module = "org.jetbrains.kotlin:kotlin-stdlib", version.ref = "kotlin-stdlib" }
 leakcanary-android = { module = "com.squareup.leakcanary:leakcanary-android", version.ref = "leakcanary" }
 markwon-core = { module = "io.noties.markwon:core", version.ref = "markwon" }

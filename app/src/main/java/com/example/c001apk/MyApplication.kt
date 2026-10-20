@@ -50,7 +50,7 @@ class MyApplication : Application() {
 
         // 匿名统计用的用户随机 ID（useradomid）：第一次启动就生成并落盘，之后不再变化。
         // 读取本身就会生成，这里显式读一次只是为了把生成时机钉在「首次启动」，
-        // 顺带保证自更新接口第一次打请求时就已经有值（见 PrefManager.userRandomId）
+        // 顺带保证 RemoteConfig 首次拉配置时就已经有值（见 PrefManager.userRandomId）
         PrefManager.userRandomId
 
         // 系统派发的本应用设备标识（SSAID）：**清数据 / 重装都不变** ✓

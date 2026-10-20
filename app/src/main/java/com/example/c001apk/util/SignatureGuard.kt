@@ -24,9 +24,9 @@ import kotlin.system.exitProcess
  * keystore 签的（channel=debug 只是给 versionName 加后缀），它照样能过这里的校验。
  *
  * 这道校验是给「二次开发」看的，不是安全边界：改了包重新签名就跑不起来。
- * 云端升级接口里另有一套**独立**的签名核验（见 _rev/update_files/update/index.php 的
- * verify_client_signature，与 App 侧上报哈希的 UpdateChecker.packageSignature），
- * 两套各写一份、互不引用 —— 把这里删掉只是本地不再拦，上报的签名照样是假的，
+ * 统计接口那边另有一套独立的签名核验（服务端 _rev/update_files/update/index.php 的
+ * verify_client_signature）—— 更新检查本身已改走 GitHub Releases，但装机统计仍然
+ * 依赖它；两套各写一份、互不引用，把这里删掉只是本地不再拦，上报的签名照样是假的，
  * 统计表收不到脏数据。**所以改这个文件时别顺手把上传那套「复用」过来。**
  */
 object SignatureGuard {
