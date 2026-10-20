@@ -99,7 +99,7 @@
     <string name="about_role_developer_designer">开发者 / 设计者</string>
     <string name="about_role_developer_collaborator">开发者 / 协作者</string>
     <string name="about_role_maintainer">当前维护者</string>
-    <string name="about_source_code_url" translatable="false">https://github.com/kongwufang/c001apk_next</string>
+    <string name="about_source_code_url" translatable="false">https://github.com/XiaoMengXinX/c001apk_next</string>
     <string name="about_checking_update">正在检查更新…</string>
     <string name="about_check_update_failed">检查更新失败，请稍后再试</string>
     <string name="about_is_latest">已是最新版本</string>

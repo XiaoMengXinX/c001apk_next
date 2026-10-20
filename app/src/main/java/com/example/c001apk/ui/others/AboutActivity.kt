@@ -5,6 +5,10 @@ import android.view.View
 import android.widget.LinearLayout
 import android.widget.Toast
 import androidx.lifecycle.lifecycleScope
+import com.bumptech.glide.Glide
+import com.bumptech.glide.load.engine.DiskCacheStrategy
+import com.bumptech.glide.load.resource.bitmap.CenterCrop
+import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions.withCrossFade
 import com.example.c001apk.BuildConfig
 import com.example.c001apk.R
 import com.example.c001apk.databinding.ActivityAboutBinding
@@ -27,8 +31,18 @@ import kotlinx.coroutines.launch
  */
 class AboutActivity : BaseActivity<ActivityAboutBinding>() {
 
-    /** 维护者，同时是拉 GitHub bio 用的用户名 */
-    private val maintainerUser = "kongwufang"
+    /**
+     * 维护者。头像与 bio 都从 GitHub 拉，内置图只作为加载前的占位
+     * （离线 / 限流时就停在占位图上，不影响其它内容）。
+     *
+     * 这个项目从 kongwufang 的仓库 fork 出来，现在由下面这些人共同维护。
+     */
+    private val maintainers = listOf(
+        Maintainer("kongwufang"),
+        Maintainer("XiaoMengXinX"),
+    )
+
+    private data class Maintainer(val user: String)
 
     /**
      * 装机量统计页。key 与 `_rev/stats_key.txt`、服务端 conf.php 的 STATS_KEY 同一份
@@ -92,7 +106,7 @@ class AboutActivity : BaseActivity<ActivityAboutBinding>() {
 
     /**
      * 作者栏分两块：**前辈**（这个项目是 fork 来的，原先的作者 / 协作者都算前辈）
-     * 和**维护者**（现在是我）。
+     * 和**维护者**（现在共同维护的几个人）。
      */
     private fun bindDevelopers() {
         addEntry(
@@ -105,19 +119,26 @@ class AboutActivity : BaseActivity<ActivityAboutBinding>() {
             getString(R.string.about_role_developer_collaborator), "https://github.com/klxiaoniu"
         )
 
-        // 维护者就我一个人；GitHub 资料里写的 bio 拉到之后，补在这条下面当一行小字
-        val me = addEntry(
-            binding.groupMaintainer, R.drawable.cont_kongwufang, maintainerUser,
-            getString(R.string.about_role_maintainer), "https://github.com/$maintainerUser"
-        )
-        lifecycleScope.launch {
-            val bio = GitHubProfile.fetchBio(maintainerUser) ?: return@launch
-            me.bio.text = bio
-            me.bio.visibility = View.VISIBLE
+        // 每位维护者一条；头像与 bio 都从 GitHub 拉，先挂通用占位图
+        maintainers.forEachIndexed { index, maintainer ->
+            if (index > 0) addDivider(binding.groupMaintainer)
+            val me = addEntry(
+                binding.groupMaintainer, R.drawable.ic_account, maintainer.user,
+                getString(R.string.about_role_maintainer),
+                "https://github.com/${maintainer.user}"
+            )
+            lifecycleScope.launch {
+                val profile = GitHubProfile.fetch(maintainer.user) ?: return@launch
+                profile.avatarUrl?.let { url -> loadAvatar(me, url) }
+                if (profile.bio.isNotEmpty()) {
+                    me.bio.text = profile.bio
+                    me.bio.visibility = View.VISIBLE
+                }
+            }
         }
     }
 
-    /** 反馈：仓库地址（固定）+ 装机量统计 + 服务端下发的群组按钮（可配多个，拉不到就不显示） */
+    /** 反馈：仓库地址（固定）+ 装机量统计 */
     private fun bindFeedback() {
         val repoUrl = getString(R.string.about_source_code_url)
         addLink(
@@ -126,21 +147,12 @@ class AboutActivity : BaseActivity<ActivityAboutBinding>() {
             repoUrl,
         ) { UpdateChecker.openExternal(this, repoUrl) }
 
-        // 装机量统计页。走 openLink 而不是 openExternal：它要遵守用户在设置里选的
-        // 「外部浏览器 / 应用内 WebView」；域名是自家的（*.houlangs.cn 在白名单里），
-        // 所以不会触发风险提示或外跳确认。
-        addLink(
-            binding.groupFeedback,
-            getString(R.string.about_install_stats),
-            getString(R.string.about_install_stats_desc),
-        ) { NetWorkUtil.openLink(this, statsUrl, getString(R.string.about_install_stats)) }
-
-        lifecycleScope.launch {
-            UpdateChecker.fetchOrgLinks().forEach { link ->
-                addLink(binding.groupFeedback, link.name, link.url) {
-                    UpdateChecker.openExternal(this@AboutActivity, link.url, "无法打开群组链接")
-                }
-            }
+        if (statsUrl.isNotEmpty()) {
+            addLink(
+                binding.groupFeedback,
+                getString(R.string.about_install_stats),
+                getString(R.string.about_install_stats_desc),
+            ) { NetWorkUtil.openLink(this, statsUrl, getString(R.string.about_install_stats)) }
         }
     }
 
@@ -153,6 +165,22 @@ class AboutActivity : BaseActivity<ActivityAboutBinding>() {
                 "${license.author} · ${license.license}",
             ) { UpdateChecker.openExternal(this, license.url) }
         }
+    }
+
+    /**
+     * 加载 GitHub 头像。
+     *
+     * 不复用 [ImageUtil.showIMG]：那个是给酷安图片用的（会带酷安 UA、
+     * 深色模式下还会压暗图片），头像既不该伪装成酷安客户端，也不该被压暗。
+     * 这里只做普通的圆角裁切加载，失败时保留 [addEntry] 设好的内置占位图。
+     */
+    private fun loadAvatar(item: ItemAboutEntryBinding, url: String) {
+        Glide.with(this)
+            .load(url)
+            .transform(CenterCrop())
+            .diskCacheStrategy(DiskCacheStrategy.ALL)
+            .transition(withCrossFade())
+            .into(item.avatar)
     }
 
     /** 往容器里塞一条「头像 + 标题 + 副标题 + 右箭头」，点了跳外部浏览器 */
